@@ -1,0 +1,167 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-heading: 'Sora', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-label: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+
+  --background-50: 0.995 0.002 60;
+  --background-100: 0.980 0.007 55;
+  --background-200: 0.956 0.009 55;
+  --background-300: 0.918 0.011 55;
+  --background-400: 0.856 0.012 55;
+  --background-500: 0.750 0.012 55;
+  --background-600: 0.630 0.012 55;
+  --background-700: 0.506 0.011 55;
+  --background-800: 0.380 0.009 55;
+  --background-900: 0.290 0.007 55;
+  --background-950: 0.208 0.005 55;
+
+  --primary-50: 0.973 0.016 33;
+  --primary-100: 0.944 0.038 33;
+  --primary-200: 0.894 0.070 33;
+  --primary-300: 0.826 0.104 33;
+  --primary-400: 0.742 0.138 33;
+  --primary-500: 0.652 0.166 32;
+  --primary-600: 0.570 0.158 31;
+  --primary-700: 0.484 0.134 30;
+  --primary-800: 0.400 0.106 30;
+  --primary-900: 0.330 0.080 30;
+  --primary-950: 0.252 0.055 30;
+
+  --accent-50: 0.974 0.020 68;
+  --accent-100: 0.946 0.046 66;
+  --accent-200: 0.900 0.084 64;
+  --accent-300: 0.846 0.118 61;
+  --accent-400: 0.782 0.146 58;
+  --accent-500: 0.718 0.162 55;
+  --accent-600: 0.636 0.152 53;
+  --accent-700: 0.542 0.132 51;
+  --accent-800: 0.450 0.106 49;
+  --accent-900: 0.368 0.082 48;
+  --accent-950: 0.278 0.058 47;
+
+  --secondary-50: 0.974 0.018 153;
+  --secondary-100: 0.946 0.040 153;
+  --secondary-200: 0.892 0.072 153;
+  --secondary-300: 0.816 0.100 153;
+  --secondary-400: 0.722 0.124 153;
+  --secondary-500: 0.622 0.136 153;
+  --secondary-600: 0.540 0.126 153;
+  --secondary-700: 0.456 0.106 153;
+  --secondary-800: 0.374 0.084 153;
+  --secondary-900: 0.304 0.064 153;
+  --secondary-950: 0.228 0.044 153;
+
+  --foreground-50: 0.975 0.005 60;
+  --foreground-100: 0.945 0.007 60;
+  --foreground-200: 0.888 0.009 58;
+  --foreground-300: 0.806 0.010 56;
+  --foreground-400: 0.688 0.010 54;
+  --foreground-500: 0.560 0.010 52;
+  --foreground-600: 0.452 0.010 50;
+  --foreground-700: 0.372 0.010 48;
+  --foreground-800: 0.292 0.010 46;
+  --foreground-900: 0.220 0.010 45;
+  --foreground-950: 0.168 0.012 42;
+}
+
+.dark {
+  --background-50: 0.192 0.006 95;
+  --background-100: 0.222 0.007 95;
+  --background-200: 0.262 0.008 95;
+  --background-300: 0.322 0.009 95;
+  --background-400: 0.402 0.010 95;
+  --background-500: 0.502 0.011 95;
+  --background-600: 0.622 0.012 95;
+  --background-700: 0.722 0.012 95;
+  --background-800: 0.812 0.012 95;
+  --background-900: 0.882 0.010 95;
+  --background-950: 0.952 0.008 95;
+
+  --foreground-50: 0.152 0.003 150;
+  --foreground-100: 0.212 0.004 150;
+  --foreground-200: 0.282 0.005 150;
+  --foreground-300: 0.362 0.006 150;
+  --foreground-400: 0.442 0.007 150;
+  --foreground-500: 0.552 0.008 150;
+  --foreground-600: 0.682 0.008 150;
+  --foreground-700: 0.802 0.008 150;
+  --foreground-800: 0.882 0.008 150;
+  --foreground-900: 0.940 0.006 150;
+  --foreground-950: 0.972 0.004 150;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background-color: oklch(var(--background-50));
+    color: oklch(var(--foreground-950));
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.015em;
+  }
+
+  ::selection {
+    background-color: oklch(var(--primary-200));
+    color: oklch(var(--primary-950));
+  }
+
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  button:focus-visible {
+    outline: none;
+  }
+}
+
+@layer utilities {
+  .font-label {
+    font-family: var(--font-label);
+  }
+
+  .scrollbar-slim::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-thumb {
+    background-color: oklch(var(--background-300));
+    border-radius: 9999px;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-thumb:hover {
+    background-color: oklch(var(--background-400));
+  }
+
+  /* Anti-spam honeypot: hidden without obvious utility names */
+  .field-assist-offscreen {
+    position: absolute;
+    left: -9999px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+}
