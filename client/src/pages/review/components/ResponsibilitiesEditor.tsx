@@ -130,11 +130,10 @@ export default function ResponsibilitiesEditor({
       icon="ri-list-check-2"
       compact
       action={
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Running total badge */}
+        <div className="flex flex-nowrap items-center gap-2">
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-label text-sm font-bold",
+              "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 font-label text-sm font-bold",
               balanced
                 ? "border-secondary-200 bg-secondary-100 text-secondary-800"
                 : totalPercent > 100
@@ -156,11 +155,12 @@ export default function ResponsibilitiesEditor({
           </span>
           {!readOnly && (
             <Button
-              variant="outline"
+              variant="primary"
               size="sm"
               icon="ri-add-line"
               onClick={addRow}
               disabled={rows.length >= MAX_ROWS}
+              className="shrink-0"
             >
               Add row
             </Button>
@@ -296,27 +296,41 @@ export default function ResponsibilitiesEditor({
           );
         })}
 
-        <div className="flex items-center justify-between rounded-lg border border-background-200 bg-background-100 px-3 py-2.5">
-          <span className="font-label text-xs font-semibold text-foreground-800">
-            Total time allocation
-          </span>
-          <span
-            className={cn(
-              "font-label text-sm font-bold",
-              balanced
-                ? "text-secondary-700"
-                : totalPercent > 100
-                  ? "text-red-600"
-                  : "text-amber-700",
-            )}
-          >
-            {totalPercent}%
-            {balanced
-              ? " · balanced"
-              : remaining > 0
-                ? ` · ${remaining}% left`
-                : ` · ${Math.abs(remaining)}% over`}
-          </span>
+        <div className="flex flex-nowrap items-center justify-between gap-2 rounded-lg border border-background-200 bg-background-100 px-3 py-2.5">
+          <div className="min-w-0">
+            <span className="font-label text-xs font-semibold text-foreground-800">
+              Total time allocation
+            </span>
+            <span
+              className={cn(
+                "ml-2 font-label text-sm font-bold",
+                balanced
+                  ? "text-secondary-700"
+                  : totalPercent > 100
+                    ? "text-red-600"
+                    : "text-amber-700",
+              )}
+            >
+              {totalPercent}%
+              {balanced
+                ? " · balanced"
+                : remaining > 0
+                  ? ` · ${remaining}% left`
+                  : ` · ${Math.abs(remaining)}% over`}
+            </span>
+          </div>
+          {!readOnly && (
+            <Button
+              variant="primary"
+              size="sm"
+              icon="ri-add-line"
+              onClick={addRow}
+              disabled={rows.length >= MAX_ROWS}
+              className="shrink-0"
+            >
+              Add row
+            </Button>
+          )}
         </div>
       </div>
 
@@ -431,9 +445,23 @@ export default function ResponsibilitiesEditor({
             <tr className="border-t border-background-200 bg-background-100">
               <td />
               <td className="px-4 py-3">
-                <span className="font-label text-sm font-semibold text-foreground-800">
-                  Total time allocation
-                </span>
+                <div className="flex flex-nowrap items-center justify-between gap-3">
+                  <span className="font-label text-sm font-semibold text-foreground-800">
+                    Total time allocation
+                  </span>
+                  {!readOnly && (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      icon="ri-add-line"
+                      onClick={addRow}
+                      disabled={rows.length >= MAX_ROWS}
+                      className="shrink-0"
+                    >
+                      Add row
+                    </Button>
+                  )}
+                </div>
               </td>
               <td className="px-4 py-3" colSpan={readOnly ? 1 : 2}>
                 <span

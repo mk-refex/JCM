@@ -14,6 +14,13 @@ const OPTIONS: Array<{
   icon: string;
   description: string;
   consequence: string;
+  tone: {
+    idle: string;
+    active: string;
+    iconIdle: string;
+    iconActive: string;
+    check: string;
+  };
 }> = [
   {
     value: "YES",
@@ -23,6 +30,13 @@ const OPTIONS: Array<{
       "I have complete clarity on my current role and what is expected of me.",
     consequence:
       "The review will be marked completed and closed at this initial check.",
+    tone: {
+      idle: "border-emerald-200 bg-emerald-50/70 hover:border-emerald-400 hover:bg-emerald-50",
+      active: "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-200",
+      iconIdle: "bg-emerald-100 text-emerald-700",
+      iconActive: "bg-emerald-600 text-white",
+      check: "text-emerald-600",
+    },
   },
   {
     value: "PARTIALLY",
@@ -32,6 +46,13 @@ const OPTIONS: Array<{
       "I understand some aspects, but several areas of my role need clarification.",
     consequence:
       "The detailed Self Assessment across the 7 clarity dimensions will open.",
+    tone: {
+      idle: "border-amber-200 bg-amber-50/70 hover:border-amber-400 hover:bg-amber-50",
+      active: "border-amber-500 bg-amber-50 ring-2 ring-amber-200",
+      iconIdle: "bg-amber-100 text-amber-700",
+      iconActive: "bg-amber-500 text-white",
+      check: "text-amber-600",
+    },
   },
   {
     value: "NO",
@@ -41,6 +62,13 @@ const OPTIONS: Array<{
       "I do not have clarity on my current role and expectations.",
     consequence:
       "The detailed Self Assessment across the 7 clarity dimensions will open.",
+    tone: {
+      idle: "border-rose-200 bg-rose-50/70 hover:border-rose-400 hover:bg-rose-50",
+      active: "border-rose-500 bg-rose-50 ring-2 ring-rose-200",
+      iconIdle: "bg-rose-100 text-rose-700",
+      iconActive: "bg-rose-600 text-white",
+      check: "text-rose-600",
+    },
   },
 ];
 
@@ -74,24 +102,25 @@ export default function InitialCheck({ onResolve }: InitialCheckProps) {
                 onClick={() => setSelected(option.value)}
                 className={cn(
                   "flex cursor-pointer flex-col gap-3 rounded-lg border p-4 text-left transition-colors",
-                  active
-                    ? "border-primary-400 bg-primary-50 ring-2 ring-primary-100"
-                    : "border-background-200 bg-background-50 hover:border-primary-300 hover:bg-background-100",
+                  active ? option.tone.active : option.tone.idle,
                 )}
               >
                 <div className="flex items-center justify-between">
                   <span
                     className={cn(
                       "flex h-10 w-10 items-center justify-center rounded-md",
-                      active
-                        ? "bg-primary-500 text-white dark:text-foreground-950"
-                        : "bg-background-100 text-foreground-600",
+                      active ? option.tone.iconActive : option.tone.iconIdle,
                     )}
                   >
                     <i className={cn(option.icon, "text-xl")} />
                   </span>
                   {active && (
-                    <i className="ri-checkbox-circle-fill text-lg text-primary-600" />
+                    <i
+                      className={cn(
+                        "ri-checkbox-circle-fill text-lg",
+                        option.tone.check,
+                      )}
+                    />
                   )}
                 </div>
                 <div>
@@ -102,7 +131,7 @@ export default function InitialCheck({ onResolve }: InitialCheckProps) {
                     {option.description}
                   </p>
                 </div>
-                <p className="mt-auto border-t border-background-200 pt-3 text-[11px] leading-relaxed text-foreground-500">
+                <p className="mt-auto border-t border-background-200/80 pt-3 text-[11px] leading-relaxed text-foreground-500">
                   {option.consequence}
                 </p>
               </button>
