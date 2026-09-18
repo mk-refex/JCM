@@ -123,7 +123,7 @@ export default function CaseOverview({
                     Key job responsibility
                   </th>
                   <th className="w-32 px-4 py-3 font-label text-xs font-semibold uppercase tracking-wide text-foreground-500">
-                    % of time
+                    % allocation
                   </th>
                 </tr>
               </thead>

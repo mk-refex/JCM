@@ -74,7 +74,7 @@ export default function SelfAssessmentForm({
     },
     {
       key: "percent",
-      label: "Time allocation totals exactly 100%",
+      label: "Total % allocation is exactly 100%.",
       ok: validResponsibilities.length > 0 && totalPercent === 100,
     },
     {
@@ -116,8 +116,10 @@ export default function SelfAssessmentForm({
                 Self Assessment in progress
               </p>
               <p className="text-xs text-foreground-600">
-                Complete Sections A–D. Save as draft at any time; submit when all
-                checks pass.
+                Complete the form with your responsibilities, the 7 clarity
+                dimensions, and your comments. You can save your progress as a
+                draft at any time and submit once all required checks are
+                completed.
                 {savedLabel ? ` Last saved at ${savedLabel}.` : ""}
               </p>
             </div>
@@ -163,7 +165,7 @@ export default function SelfAssessmentForm({
 
       <SectionCard
         title="Section D — Employee comments"
-        description="Please note any specific aspect of your role you would like your manager or HR to clarify further."
+        description="Mention any specific responsibilities, expectations, priorities, or aspects of your role that you would like your Manager or HR to clarify further."
         icon="ri-chat-3-line"
         compact
       >
@@ -196,7 +198,7 @@ export default function SelfAssessmentForm({
 
       <SectionCard
         title="Submission readiness"
-        description="All checks must pass before the self assessment can be submitted."
+        description="Complete all required fields and ensure that all validation checks are successfully completed before submitting your self-assessment."
         icon="ri-shield-check-line"
         compact
       >

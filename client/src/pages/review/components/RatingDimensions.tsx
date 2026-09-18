@@ -61,7 +61,7 @@ export default function RatingDimensions({
   onChange,
   readOnly = false,
   sectionTitle = "Section C — Role clarity rating",
-  sectionDescription = "Rate your clarity on each of the 7 dimensions using the dropdown. Every dimension is mandatory.",
+  sectionDescription = "For each of the 7 dimensions, select the level that best reflects your current clarity using the dropdown. All 7 dimensions are mandatory and must be rated before you can submit.",
   ratingLabel = "Your clarity rating",
 }: RatingDimensionsProps) {
   const ratedCount = CLARITY_DIMENSIONS.filter(

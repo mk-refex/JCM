@@ -126,7 +126,7 @@ export default function ResponsibilitiesEditor({
   return (
     <SectionCard
       title="Section B — Key job responsibilities"
-      description="List the tasks and deliverables you actually perform. Use the stepper to set the approximate % of your time each takes. The total must equal 100%."
+      description="List the key tasks and deliverables you currently handle and indicate the approximate percentage of your time spent on each using the stepper. Ensure the total allocation adds up to 100%."
       icon="ri-list-check-2"
       compact
       action={
@@ -174,7 +174,7 @@ export default function ResponsibilitiesEditor({
         <div className="flex items-center justify-between mb-1.5">
           <span className="font-label text-xs text-foreground-600">
             {balanced
-              ? "Time allocation complete"
+              ? "Progress Timeline"
               : remaining > 0
                 ? `${remaining}% still to allocate`
                 : `${Math.abs(remaining)}% over — reduce to stay within 100%`}
@@ -271,7 +271,7 @@ export default function ResponsibilitiesEditor({
 
               <div className="mt-2.5 flex items-center justify-between gap-3">
                 <span className="font-label text-[11px] font-semibold uppercase tracking-wide text-foreground-500">
-                  % of time
+                  % allocation
                 </span>
                 {readOnly ? (
                   <span
@@ -299,7 +299,7 @@ export default function ResponsibilitiesEditor({
         <div className="flex flex-nowrap items-center justify-between gap-2 rounded-lg border border-background-200 bg-background-100 px-3 py-2.5">
           <div className="min-w-0">
             <span className="font-label text-xs font-semibold text-foreground-800">
-              Total time allocation
+              Total % allocation
             </span>
             <span
               className={cn(
@@ -345,7 +345,7 @@ export default function ResponsibilitiesEditor({
                 Key job responsibility
               </th>
               <th className="w-48 px-4 py-3 font-label text-xs font-semibold uppercase tracking-wide text-foreground-500">
-                % of time
+                % allocation
               </th>
               {!readOnly && <th className="w-14 px-4 py-3" />}
             </tr>
@@ -447,7 +447,7 @@ export default function ResponsibilitiesEditor({
               <td className="px-4 py-3">
                 <div className="flex flex-nowrap items-center justify-between gap-3">
                   <span className="font-label text-sm font-semibold text-foreground-800">
-                    Total time allocation
+                    Total % allocation
                   </span>
                   {!readOnly && (
                     <Button
@@ -488,12 +488,13 @@ export default function ResponsibilitiesEditor({
       </div>
 
       <p className="border-t border-background-200 px-3 py-2.5 text-xs text-foreground-500">
-        Up to {MAX_ROWS} responsibilities can be added. Use{" "}
+        Add up to {MAX_ROWS} responsibilities. Use the{" "}
         <strong className="text-foreground-700">−</strong> and{" "}
-        <strong className="text-foreground-700">+</strong> buttons (5% steps) or
-        type a value directly. Total must equal exactly{" "}
-        <strong className="text-foreground-700">100%</strong> before you can
-        submit.
+        <strong className="text-foreground-700">+</strong> buttons to adjust the
+        % allocation for each responsibility in 5% increments, or enter a value
+        directly. Ensure that the combined % allocation across all
+        responsibilities equals exactly{" "}
+        <strong className="text-foreground-700">100%</strong> before submitting.
       </p>
     </SectionCard>
   );

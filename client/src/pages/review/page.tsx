@@ -344,9 +344,9 @@ export default function ReviewPage() {
             Your Role Clarity Self Assessment
           </h1>
           <p className="mt-0.5 max-w-2xl text-xs text-foreground-600 sm:text-sm">
-            Complete the form fields below — your responsibilities, the 7 clarity
-            dimensions and your comments. Save as draft at any time; submit once
-            all checks pass.
+            Complete the form with your responsibilities, the 7 clarity
+            dimensions, and your comments. You can save your progress as a draft
+            at any time and submit once all required checks are completed.
           </p>
         </div>
 
