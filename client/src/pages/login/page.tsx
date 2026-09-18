@@ -200,12 +200,12 @@ export default function Login() {
             <div className="mt-6">
               <div className="flex items-center gap-3">
                 <div className="h-px flex-1 bg-background-200" />
-                <span className="font-label text-xs uppercase tracking-wide text-foreground-500">
-                  Or sign in with
+                <span className="font-label text-xs font-medium uppercase tracking-wide text-foreground-400">
+                  OR
                 </span>
                 <div className="h-px flex-1 bg-background-200" />
               </div>
-              <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+              <div className="mt-4 flex flex-col gap-2.5">
                 {providers.map((provider) => {
                   const label = provider.displayName?.trim() || provider.provider;
                   const href = `/auth/sso/${encodeURIComponent(provider.provider)}?state=${encodeURIComponent(window.location.origin)}`;
@@ -213,19 +213,18 @@ export default function Login() {
                     <a
                       key={provider.provider}
                       href={href}
-                      title={label}
-                      aria-label={label}
-                      className="inline-flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border border-background-300 bg-background-50 p-0 hover:bg-background-100"
+                      className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2.5 rounded-lg border border-background-300 bg-background-50 px-4 font-label text-sm font-medium text-foreground-900 hover:bg-background-100"
                     >
                       {provider.iconUrl?.trim() ? (
                         <img
                           src={provider.iconUrl}
                           alt=""
-                          className="h-7 w-7 object-contain"
+                          className="h-5 w-5 shrink-0 object-contain"
                         />
                       ) : (
-                        <i className="ri-shield-keyhole-line text-2xl text-primary-600" />
+                        <i className="ri-shield-keyhole-line shrink-0 text-lg text-primary-600" />
                       )}
+                      <span>Sign in with {label}</span>
                     </a>
                   );
                 })}
