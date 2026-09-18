@@ -5,6 +5,7 @@ import {
   loadStakeholders,
   sendAlignedEmails,
   sendClosureEmails,
+  sendConversationDoneEmails,
   sendNoClarityEmails,
   sendNotAlignedEmails,
   sendManagerSubmitEmails,
@@ -471,9 +472,18 @@ export async function runAlignmentConversation(auth, id, input = {}) {
   if (input.complete) payload.complete = true;
 
   const names = await namesFor(assessment);
-  return applyWorkflow(auth, id, (current) =>
+  const result = await applyWorkflow(auth, id, (current) =>
     saveAlignmentConversation(current, payload, names),
   );
+  if (
+    !result.error &&
+    result.assessment &&
+    input.complete &&
+    result.assessment.alignmentConversation?.status === "COMPLETED"
+  ) {
+    result.mail = await sendConversationDoneEmails(result.assessment);
+  }
+  return result;
 }
 
 const HOD_SIGNOFF_STATUSES = new Set([

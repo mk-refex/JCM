@@ -52,6 +52,18 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;");
 }
 
+export function buildViewUrl(assessment, person) {
+  const base = String(config.appUrl || "").replace(/\/$/, "");
+  if (!base || !assessment?.id) return null;
+  const isActor =
+    person?.id &&
+    (person.id === assessment.employeeId || person.id === assessment.managerId);
+  const path = isActor
+    ? `/app/review/${encodeURIComponent(assessment.id)}`
+    : `/app/assessments/${encodeURIComponent(assessment.id)}`;
+  return `${base}${path}`;
+}
+
 export async function loadStakeholders(assessment) {
   const db = await getPool();
   const ids = [
@@ -120,7 +132,7 @@ function recipientsFor(audience, ctx) {
   return uniqueByEmail([ctx.employee, ctx.manager, ctx.hod, ctx.hrbp]);
 }
 
-function renderText({ dear, paragraphs, bullets, closing, cta }) {
+function renderText({ dear, paragraphs, bullets, closing, viewUrl }) {
   const lines = [`Dear ${dear},`, ""];
   for (const paragraph of paragraphs || []) {
     lines.push(paragraph, "");
@@ -132,14 +144,14 @@ function renderText({ dear, paragraphs, bullets, closing, cta }) {
   for (const paragraph of closing || []) {
     lines.push(paragraph, "");
   }
-  if (cta) {
-    lines.push(cta, "");
+  if (viewUrl) {
+    lines.push("View Now:", viewUrl, "");
   }
   lines.push(...SIGNATURE);
   return lines.join("\n").replace(/\n{3,}/g, "\n\n");
 }
 
-function renderHtml({ dear, title, paragraphs, bullets, closing, cta }) {
+function renderHtml({ dear, title, paragraphs, bullets, closing, viewUrl }) {
   const blocks = [
     `<p style="margin:0 0 16px 0;">Dear ${escapeHtml(dear)},</p>`,
     ...(paragraphs || []).map(
@@ -157,9 +169,17 @@ function renderHtml({ dear, title, paragraphs, bullets, closing, cta }) {
   for (const paragraph of closing || []) {
     blocks.push(`<p style="margin:0 0 16px 0;">${escapeHtml(paragraph)}</p>`);
   }
-  if (cta) {
+  if (viewUrl) {
     blocks.push(
-      `<p style="margin:0 0 16px 0;font-weight:700;color:#b4532a;">${escapeHtml(cta)}</p>`,
+      `<p style="margin:24px 0 8px 0;">
+        <a href="${escapeHtml(viewUrl)}"
+           style="display:inline-block;background:#b4532a;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:700;font-size:14px;letter-spacing:0.01em;">
+          View Now
+        </a>
+      </p>
+      <p style="margin:0 0 16px 0;font-size:12px;color:#7a6a5c;">
+        Or open this link: <a href="${escapeHtml(viewUrl)}" style="color:#b4532a;">${escapeHtml(viewUrl)}</a>
+      </p>`,
     );
   }
   blocks.push(
@@ -232,12 +252,13 @@ async function sendJob(assessment, ctx, job) {
   const sentTo = [];
   for (const person of people) {
     const dear = displayName(person, "Colleague");
+    const viewUrl = buildViewUrl(assessment, person);
     const text = renderText({
       dear,
       paragraphs: job.paragraphs,
       bullets: job.bullets,
       closing: job.closing,
-      cta: job.cta,
+      viewUrl,
     });
     const html = renderHtml({
       dear,
@@ -245,7 +266,7 @@ async function sendJob(assessment, ctx, job) {
       paragraphs: job.paragraphs,
       bullets: job.bullets,
       closing: job.closing,
-      cta: job.cta,
+      viewUrl,
     });
 
     if (!tx) {
@@ -330,11 +351,26 @@ export async function sendManagerSubmitEmails(assessment) {
 }
 
 export async function sendAlignedEmails(assessment) {
-  return dispatch(assessment, [COPY.aligned.hodMail]);
+  return dispatch(assessment, [
+    COPY.aligned.employeeMail,
+    COPY.aligned.hodMail,
+    COPY.aligned.hrbpMail,
+  ]);
 }
 
 export async function sendNotAlignedEmails(assessment) {
-  return dispatch(assessment, [COPY.notAligned.leadershipMail]);
+  return dispatch(assessment, [
+    COPY.notAligned.employeeMail,
+    COPY.notAligned.leadershipMail,
+  ]);
+}
+
+export async function sendConversationDoneEmails(assessment) {
+  return dispatch(assessment, [
+    COPY.conversationDone.employeeMail,
+    COPY.conversationDone.hodMail,
+    COPY.conversationDone.hrbpMail,
+  ]);
 }
 
 export async function sendClosureEmails(assessment) {
@@ -365,9 +401,7 @@ export async function sendReminderEmails(assessment) {
 }
 
 function reminderAudience(status) {
-  if (
-    status === "MANAGER_ASSESSMENT_PENDING"
-  ) {
+  if (status === "MANAGER_ASSESSMENT_PENDING") {
     return "MANAGER";
   }
   if (status === "HOD_SIGNOFF_PENDING" || status === "ROLE_ALIGNMENT_COMPLETED") {

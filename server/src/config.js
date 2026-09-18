@@ -16,6 +16,11 @@ export const config = {
   port: Number(process.env.PORT || 4000),
   jwtSecret: required("JWT_SECRET", "jcm-dev-jwt-secret-change-in-production"),
   jwtExpiresIn: "12h",
+  appUrl: String(
+    process.env.FRONTEND_URL ||
+      process.env.APP_URL ||
+      "http://localhost:3000",
+  ).replace(/\/$/, ""),
   db: {
     host: process.env.DB_HOST || "127.0.0.1",
     port: Number(process.env.DB_PORT || 3306),

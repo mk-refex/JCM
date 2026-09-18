@@ -155,6 +155,14 @@ export const COPY = {
       title: "Role Alignment Confirmed",
       message: `${employeeName} has confirmed alignment with the role expectations provided by the Reporting Manager. The case has been routed to ${hodName} for final sign-off.`,
     }),
+    employeeMail: ({ employeeName }) => ({
+      audience: "EMPLOYEE",
+      subject: `Role Alignment Confirmed – ${employeeName}`,
+      paragraphs: [
+        `Thank you for confirming that the role expectations and clarifications provided by your Reporting Manager are aligned with your understanding.`,
+        `The assessment has now been routed to the HOD for final review and sign-off. No further action is required from you at this stage.`,
+      ],
+    }),
     hodMail: ({ employeeName, dueDate }) => ({
       audience: "HOD",
       subject: `Action Required – Final Sign-Off | Role Clarity – ${employeeName}`,
@@ -164,7 +172,14 @@ export const COPY = {
         `The assessment is now pending your final review and sign-off.`,
         `Please complete the sign-off by ${dueDate}.`,
       ],
-      cta: "[Review & Sign Off]",
+    }),
+    hrbpMail: ({ employeeName, hodName }) => ({
+      audience: "HRBP",
+      subject: `Role Alignment Confirmed – ${employeeName}`,
+      paragraphs: [
+        `${employeeName} has confirmed alignment with the role expectations provided by the Reporting Manager.`,
+        `The case has been routed to ${hodName} for final sign-off. No action is required from you at this stage.`,
+      ],
     }),
   },
 
@@ -174,6 +189,15 @@ export const COPY = {
       message:
         "The employee has indicated that the role expectations and clarifications provided are not yet fully aligned with their understanding of the role. A Role Alignment Conversation involving the Employee, Reporting Manager, HOD and HRBP is required to establish a shared understanding of the role and expectations.",
     },
+    employeeMail: ({ employeeName }) => ({
+      audience: "EMPLOYEE",
+      subject: `Role Alignment Conversation Required | ${employeeName}`,
+      paragraphs: [
+        `You have indicated that the role expectations/clarifications provided are not yet fully aligned with your understanding of the role.`,
+        `A Role Alignment Conversation involving you, your Reporting Manager, HOD and HRBP will be arranged to establish a shared understanding of the role and expectations.`,
+        `You will be contacted with the next steps. Please be prepared to discuss the areas that require clarification.`,
+      ],
+    }),
     leadershipMail: ({ employeeName }) => ({
       audience: "LEADERSHIP",
       subject: `Action Required – Role Alignment Conversation | ${employeeName}`,
@@ -204,6 +228,31 @@ export const COPY = {
     hrbpNotice: ({ employeeName }) => ({
       title: "Role Alignment Conversation Completed",
       message: `The Role Alignment Conversation for ${employeeName} has been completed. Please add any relevant HRBP observations/comments before HOD final sign-off.`,
+    }),
+    hodMail: ({ employeeName, dueDate }) => ({
+      audience: "HOD",
+      subject: `Action Required – Final Sign-Off after Alignment Conversation | ${employeeName}`,
+      paragraphs: [
+        `The Role Alignment Conversation for ${employeeName} has been completed.`,
+        `Please record the final outcome/comments and provide HOD sign-off to close the Role Clarity Review.`,
+        `Please complete the sign-off by ${dueDate}.`,
+      ],
+    }),
+    hrbpMail: ({ employeeName }) => ({
+      audience: "HRBP",
+      subject: `Role Alignment Conversation Completed | ${employeeName}`,
+      paragraphs: [
+        `The Role Alignment Conversation for ${employeeName} has been completed.`,
+        `Please add any relevant HRBP observations/comments before HOD final sign-off.`,
+      ],
+    }),
+    employeeMail: ({ employeeName }) => ({
+      audience: "EMPLOYEE",
+      subject: `Role Alignment Conversation Completed | ${employeeName}`,
+      paragraphs: [
+        `The Role Alignment Conversation for your role has been completed.`,
+        `The case has been routed to the HOD for final sign-off. No further action is required from you at this stage.`,
+      ],
     }),
   },
 
