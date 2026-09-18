@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { SectionCard } from "@/components/base/Card";
 import Button from "@/components/base/Button";
@@ -31,8 +31,6 @@ export default function AssessmentDetail() {
   const { pushToast } = useToast();
 
   const record = assessmentById(id);
-  const [signingOff, setSigningOff] = useState(false);
-  const [savingConversation, setSavingConversation] = useState(false);
 
   useEffect(() => {
     if (id) void loadAudit(id).catch(() => undefined);
@@ -90,8 +88,8 @@ export default function AssessmentDetail() {
 
   const toastResult = (
     result: WorkflowResult | null | Promise<WorkflowResult | null>,
-  ) => {
-    void Promise.resolve(result)
+  ) =>
+    Promise.resolve(result)
       .then((value) => {
         if (!value) return;
         pushToast({
@@ -107,27 +105,15 @@ export default function AssessmentDetail() {
           message: error instanceof Error ? error.message : "Please try again.",
         });
       });
-  };
 
-  const handleHodSignoff = (comments: string) => {
-    setSigningOff(true);
-    toastResult(
-      submitHodSignoff(record, comments).finally(() => setSigningOff(false)),
-    );
-  };
+  const handleHodSignoff = (comments: string) =>
+    toastResult(submitHodSignoff(record, comments));
 
   const handleConversation = (input: {
     hodComments?: string;
     hrbpComments?: string;
     complete?: boolean;
-  }) => {
-    setSavingConversation(true);
-    toastResult(
-      submitAlignmentConversation(record, input).finally(() =>
-        setSavingConversation(false),
-      ),
-    );
-  };
+  }) => toastResult(submitAlignmentConversation(record, input));
 
   return (
     <div className="flex flex-col gap-6">
@@ -167,14 +153,12 @@ export default function AssessmentDetail() {
               employeeName={employee?.name ?? "the employee"}
               canEditHod={canEditHodConversation}
               canEditHrbp={canEditHrbpConversation}
-              submitting={savingConversation}
               onSave={handleConversation}
             />
           )}
           {canSignOff && (
             <HodSignoffForm
               employeeName={employee?.name ?? "the employee"}
-              submitting={signingOff}
               onSubmit={handleHodSignoff}
             />
           )}

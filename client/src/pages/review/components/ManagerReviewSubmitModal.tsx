@@ -9,6 +9,7 @@ interface ManagerReviewSubmitModalProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  loading?: boolean;
   employee?: Employee;
   input: ManagerAssessmentInput;
 }
@@ -17,6 +18,7 @@ export default function ManagerReviewSubmitModal({
   open,
   onClose,
   onConfirm,
+  loading = false,
   employee,
   input,
 }: ManagerReviewSubmitModalProps) {
@@ -37,15 +39,21 @@ export default function ManagerReviewSubmitModal({
     <Modal
       open={open}
       onClose={onClose}
+      preventClose={loading}
       size="lg"
       title="Review your manager assessment"
       description="Check everything below before you submit. Once submitted, your assessment is locked and the employee is asked to confirm alignment."
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose} disabled={loading}>
             Keep editing
           </Button>
-          <Button variant="primary" icon="ri-send-plane-line" onClick={onConfirm}>
+          <Button
+            variant="primary"
+            icon="ri-send-plane-line"
+            loading={loading}
+            onClick={onConfirm}
+          >
             Submit assessment
           </Button>
         </>

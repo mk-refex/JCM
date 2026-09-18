@@ -5,17 +5,26 @@ import { cn } from "@/lib/utils";
 
 interface HodSignoffFormProps {
   employeeName: string;
-  submitting?: boolean;
-  onSubmit: (comments: string) => void;
+  onSubmit: (comments: string) => void | Promise<unknown>;
 }
 
 export default function HodSignoffForm({
   employeeName,
-  submitting = false,
   onSubmit,
 }: HodSignoffFormProps) {
   const [comments, setComments] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const ready = comments.trim().length > 0 && !submitting;
+
+  const handleSubmit = async () => {
+    if (!ready) return;
+    setSubmitting(true);
+    try {
+      await onSubmit(comments.trim());
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <SectionCard
@@ -32,8 +41,9 @@ export default function HodSignoffForm({
         onChange={(event) => setComments(event.target.value.slice(0, 1500))}
         rows={6}
         maxLength={1500}
+        disabled={submitting}
         placeholder="Record your final comments, any clarifications, and the basis for closing this case…"
-        className="w-full resize-y rounded-lg border border-background-300 bg-white px-4 py-3 font-label text-sm leading-relaxed text-foreground-900 placeholder:text-foreground-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100 transition-colors"
+        className="w-full resize-y rounded-lg border border-background-300 bg-white px-4 py-3 font-label text-sm leading-relaxed text-foreground-900 placeholder:text-foreground-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100 transition-colors disabled:opacity-70"
       />
       <div className="mt-2 flex items-center justify-between">
         <p className="text-xs text-foreground-500">
@@ -56,7 +66,7 @@ export default function HodSignoffForm({
           icon="ri-checkbox-circle-line"
           loading={submitting}
           disabled={!ready}
-          onClick={() => onSubmit(comments.trim())}
+          onClick={() => void handleSubmit()}
         >
           Sign off and close case
         </Button>

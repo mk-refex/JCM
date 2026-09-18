@@ -13,8 +13,8 @@ interface ManagerAssessmentFormProps {
   assessment: Assessment;
   employee?: Employee;
   managerName?: string;
-  onSaveDraft: (input: ManagerAssessmentInput) => void;
-  onSubmit: (input: ManagerAssessmentInput) => void;
+  onSaveDraft: (input: ManagerAssessmentInput) => void | Promise<unknown>;
+  onSubmit: (input: ManagerAssessmentInput) => void | Promise<unknown>;
 }
 
 function buildInitialRatings(assessment: Assessment) {
@@ -44,6 +44,8 @@ export default function ManagerAssessmentForm({
   const [comments, setComments] = useState(assessment.managerComments);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [savedLabel, setSavedLabel] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const employeeName = employee?.name ?? "your team member";
 
@@ -72,6 +74,7 @@ export default function ManagerAssessmentForm({
     },
   ];
   const canSubmit = checks.every((c) => c.ok);
+  const busy = saving || submitting;
 
   const buildInput = (): ManagerAssessmentInput => ({
     managerRatings: CLARITY_DIMENSIONS.map((dimension) => ({
@@ -82,9 +85,31 @@ export default function ManagerAssessmentForm({
     roleExpectations: roleExpectations.trim(),
   });
 
-  const handleConfirmSubmit = () => {
-    setReviewOpen(false);
-    onSubmit(buildInput());
+  const handleSaveDraft = async () => {
+    if (busy) return;
+    setSaving(true);
+    try {
+      await onSaveDraft(buildInput());
+      setSavedLabel(
+        new Date().toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleConfirmSubmit = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await onSubmit(buildInput());
+      setReviewOpen(false);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -112,15 +137,9 @@ export default function ManagerAssessmentForm({
               variant="outline"
               size="sm"
               icon="ri-save-line"
-              onClick={() => {
-                onSaveDraft(buildInput());
-                setSavedLabel(
-                  new Date().toLocaleTimeString("en-GB", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  }),
-                );
-              }}
+              loading={saving}
+              disabled={busy}
+              onClick={() => void handleSaveDraft()}
             >
               Save draft
             </Button>
@@ -128,7 +147,7 @@ export default function ManagerAssessmentForm({
               variant="primary"
               size="sm"
               icon="ri-send-plane-line"
-              disabled={!canSubmit}
+              disabled={!canSubmit || busy}
               onClick={() => setReviewOpen(true)}
             >
               Review &amp; submit
@@ -250,7 +269,7 @@ export default function ManagerAssessmentForm({
           <Button
             variant="primary"
             icon="ri-send-plane-line"
-            disabled={!canSubmit}
+            disabled={!canSubmit || busy}
             onClick={() => setReviewOpen(true)}
           >
             Review &amp; submit
@@ -260,8 +279,11 @@ export default function ManagerAssessmentForm({
 
       <ManagerReviewSubmitModal
         open={reviewOpen}
-        onClose={() => setReviewOpen(false)}
-        onConfirm={handleConfirmSubmit}
+        onClose={() => {
+          if (!submitting) setReviewOpen(false);
+        }}
+        onConfirm={() => void handleConfirmSubmit()}
+        loading={submitting}
         employee={employee}
         input={buildInput()}
       />

@@ -10,6 +10,7 @@ interface ReviewSubmitModalProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  loading?: boolean;
   employee?: Employee;
   managerName?: string;
   input: SelfAssessmentInput;
@@ -19,6 +20,7 @@ export default function ReviewSubmitModal({
   open,
   onClose,
   onConfirm,
+  loading = false,
   employee,
   managerName,
   input,
@@ -45,15 +47,21 @@ export default function ReviewSubmitModal({
     <Modal
       open={open}
       onClose={onClose}
+      preventClose={loading}
       size="lg"
       title="Review your self assessment"
       description="Check everything below before you submit. Once submitted, the assessment is locked and routed to your reporting manager."
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose} disabled={loading}>
             Keep editing
           </Button>
-          <Button variant="primary" icon="ri-send-plane-line" onClick={onConfirm}>
+          <Button
+            variant="primary"
+            icon="ri-send-plane-line"
+            loading={loading}
+            onClick={onConfirm}
+          >
             Submit assessment
           </Button>
         </>

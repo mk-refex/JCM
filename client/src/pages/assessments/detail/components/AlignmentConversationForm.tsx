@@ -9,12 +9,11 @@ interface AlignmentConversationFormProps {
   employeeName: string;
   canEditHod: boolean;
   canEditHrbp: boolean;
-  submitting?: boolean;
   onSave: (input: {
     hodComments?: string;
     hrbpComments?: string;
     complete?: boolean;
-  }) => void;
+  }) => void | Promise<unknown>;
 }
 
 export default function AlignmentConversationForm({
@@ -22,7 +21,6 @@ export default function AlignmentConversationForm({
   employeeName,
   canEditHod,
   canEditHrbp,
-  submitting = false,
   onSave,
 }: AlignmentConversationFormProps) {
   const existing = assessment.alignmentConversation;
@@ -32,6 +30,7 @@ export default function AlignmentConversationForm({
   const [hrbpComments, setHrbpComments] = useState(
     existing?.hrbpComments || assessment.hrbpComments || "",
   );
+  const [action, setAction] = useState<"save" | "complete" | null>(null);
 
   const hodValue = canEditHod
     ? hodComments
@@ -40,7 +39,8 @@ export default function AlignmentConversationForm({
     ? hrbpComments
     : existing?.hrbpComments || assessment.hrbpComments || "";
   const hodReady = hodValue.trim().length > 0;
-  const canComplete = (canEditHod || canEditHrbp) && hodReady && !submitting;
+  const busy = action !== null;
+  const canComplete = (canEditHod || canEditHrbp) && hodReady && !busy;
 
   const payload = () => {
     const input: {
@@ -50,6 +50,16 @@ export default function AlignmentConversationForm({
     if (canEditHod) input.hodComments = hodComments.trim();
     if (canEditHrbp) input.hrbpComments = hrbpComments.trim();
     return input;
+  };
+
+  const run = async (kind: "save" | "complete", complete = false) => {
+    if (busy) return;
+    setAction(kind);
+    try {
+      await onSave({ ...payload(), ...(complete ? { complete: true } : {}) });
+    } finally {
+      setAction(null);
+    }
   };
 
   return (
@@ -76,8 +86,9 @@ export default function AlignmentConversationForm({
           onChange={(event) => setHodComments(event.target.value.slice(0, 1500))}
           rows={5}
           maxLength={1500}
+          disabled={busy}
           placeholder="Record the final comments and clarifications arising from the Role Alignment Conversation…"
-          className="w-full resize-y rounded-lg border border-background-300 bg-white px-4 py-3 font-label text-sm leading-relaxed text-foreground-900 placeholder:text-foreground-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100 transition-colors"
+          className="w-full resize-y rounded-lg border border-background-300 bg-white px-4 py-3 font-label text-sm leading-relaxed text-foreground-900 placeholder:text-foreground-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100 transition-colors disabled:opacity-70"
         />
       ) : (
         <p className="rounded-lg border border-background-200 bg-background-100 px-4 py-3 text-sm text-foreground-700">
@@ -99,8 +110,9 @@ export default function AlignmentConversationForm({
           onChange={(event) => setHrbpComments(event.target.value.slice(0, 1500))}
           rows={5}
           maxLength={1500}
+          disabled={busy}
           placeholder="Capture relevant observations or notes from the conversation…"
-          className="w-full resize-y rounded-lg border border-background-300 bg-white px-4 py-3 font-label text-sm leading-relaxed text-foreground-900 placeholder:text-foreground-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100 transition-colors"
+          className="w-full resize-y rounded-lg border border-background-300 bg-white px-4 py-3 font-label text-sm leading-relaxed text-foreground-900 placeholder:text-foreground-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100 transition-colors disabled:opacity-70"
         />
       ) : (
         <p className="rounded-lg border border-background-200 bg-background-100 px-4 py-3 text-sm text-foreground-700">
@@ -127,18 +139,18 @@ export default function AlignmentConversationForm({
             type="button"
             variant="outline"
             icon="ri-save-line"
-            loading={submitting}
-            disabled={submitting}
-            onClick={() => onSave(payload())}
+            loading={action === "save"}
+            disabled={busy}
+            onClick={() => void run("save")}
           >
             Save notes
           </Button>
           <Button
             type="button"
             icon="ri-check-double-line"
-            loading={submitting}
+            loading={action === "complete"}
             disabled={!canComplete}
-            onClick={() => onSave({ ...payload(), complete: true })}
+            onClick={() => void run("complete", true)}
           >
             Complete conversation
           </Button>

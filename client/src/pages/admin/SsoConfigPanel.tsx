@@ -42,6 +42,7 @@ export default function SsoConfigPanel() {
   const [providers, setProviders] = useState<SsoProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<SsoProvider | null>(null);
   const [form, setForm] = useState<SsoProviderInput>(EMPTY_FORM);
@@ -133,6 +134,7 @@ export default function SsoConfigPanel() {
     if (!window.confirm(`Delete SSO provider “${provider.displayName || provider.provider}”?`)) {
       return;
     }
+    setDeletingId(provider.id);
     try {
       await deleteSsoProvider(provider.id);
       pushToast({
@@ -147,6 +149,8 @@ export default function SsoConfigPanel() {
         title: "Delete failed",
         message: error instanceof ApiError ? error.message : "Could not delete provider.",
       });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -260,6 +264,8 @@ export default function SsoConfigPanel() {
                             size="sm"
                             variant="ghost"
                             icon="ri-delete-bin-line"
+                            loading={deletingId === provider.id}
+                            disabled={Boolean(deletingId)}
                             onClick={() => void handleDelete(provider)}
                           >
                             Delete
@@ -288,7 +294,10 @@ export default function SsoConfigPanel() {
 
       <Modal
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          if (!saving) setOpen(false);
+        }}
+        preventClose={saving}
         title={editing ? "Edit SSO provider" : "Add SSO provider"}
         description="OIDC authorization-code settings used for login."
         size="lg"

@@ -9,6 +9,8 @@ interface ModalProps {
   children: ReactNode;
   footer?: ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
+  /** When true, Escape / overlay / X will not close the modal. */
+  preventClose?: boolean;
 }
 
 const SIZE = {
@@ -26,15 +28,16 @@ export default function Modal({
   children,
   footer,
   size = "md",
+  preventClose = false,
 }: ModalProps) {
   useEffect(() => {
-    if (!open) return undefined;
+    if (!open || preventClose) return undefined;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, onClose, preventClose]);
 
   if (!open) return null;
 
@@ -44,7 +47,9 @@ export default function Modal({
         type="button"
         aria-label="Close dialog"
         className="absolute inset-0 h-full w-full cursor-default"
-        onClick={onClose}
+        onClick={() => {
+          if (!preventClose) onClose();
+        }}
       />
       <div
         role="dialog"
@@ -71,7 +76,8 @@ export default function Modal({
             <button
               type="button"
               onClick={onClose}
-              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-foreground-500 hover:bg-background-100"
+              disabled={preventClose}
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-foreground-500 hover:bg-background-100 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <i className="ri-close-line text-lg" />
             </button>

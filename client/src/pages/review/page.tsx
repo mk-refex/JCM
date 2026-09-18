@@ -99,8 +99,8 @@ export default function ReviewPage() {
 
   const toastResult = (
     result: WorkflowResult | null | Promise<WorkflowResult | null>,
-  ) => {
-    void Promise.resolve(result)
+  ) =>
+    Promise.resolve(result)
       .then((value) => {
         if (!value) return;
         pushToast({
@@ -116,7 +116,6 @@ export default function ReviewPage() {
           message: error instanceof Error ? error.message : "Please try again.",
         });
       });
-  };
 
   const caseLink = (
     <Link to={`/app/assessments/${record.id}`}>

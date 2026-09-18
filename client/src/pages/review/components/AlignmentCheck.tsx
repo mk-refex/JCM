@@ -16,7 +16,9 @@ import type { AlignmentStatus, Assessment } from "@/types/domain";
 
 interface AlignmentCheckProps {
   assessment: Assessment;
-  onDecide: (decision: Exclude<AlignmentStatus, "PENDING">) => void;
+  onDecide: (
+    decision: Exclude<AlignmentStatus, "PENDING">,
+  ) => void | Promise<unknown>;
 }
 
 export default function AlignmentCheck({
@@ -26,6 +28,17 @@ export default function AlignmentCheck({
   const [decision, setDecision] = useState<
     Exclude<AlignmentStatus, "PENDING"> | null
   >(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleConfirm = async () => {
+    if (!decision || submitting) return;
+    setSubmitting(true);
+    try {
+      await onDecide(decision);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const rows = buildDimensionGaps(
     assessment.employeeRatings,
@@ -207,12 +220,14 @@ export default function AlignmentCheck({
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             <button
               type="button"
+              disabled={submitting}
               onClick={() => setDecision("ALIGNED")}
               className={cn(
                 "flex cursor-pointer flex-col gap-2 rounded-lg border p-4 text-left transition-colors",
                 decision === "ALIGNED"
                   ? "border-primary-400 bg-primary-50 ring-2 ring-primary-100"
                   : "border-background-200 bg-background-50 hover:border-primary-300 hover:bg-background-100",
+                submitting && "cursor-not-allowed opacity-70",
               )}
             >
               <span className="flex items-center gap-2">
@@ -238,12 +253,14 @@ export default function AlignmentCheck({
 
             <button
               type="button"
+              disabled={submitting}
               onClick={() => setDecision("NOT_ALIGNED")}
               className={cn(
                 "flex cursor-pointer flex-col gap-2 rounded-lg border p-4 text-left transition-colors",
                 decision === "NOT_ALIGNED"
                   ? "border-accent-400 bg-accent-50 ring-2 ring-accent-100"
                   : "border-background-200 bg-background-50 hover:border-accent-300 hover:bg-background-100",
+                submitting && "cursor-not-allowed opacity-70",
               )}
             >
               <span className="flex items-center gap-2">
@@ -279,8 +296,9 @@ export default function AlignmentCheck({
             <Button
               variant="primary"
               icon="ri-check-double-line"
-              disabled={!decision}
-              onClick={() => decision && onDecide(decision)}
+              loading={submitting}
+              disabled={!decision || submitting}
+              onClick={() => void handleConfirm()}
             >
               Confirm alignment decision
             </Button>

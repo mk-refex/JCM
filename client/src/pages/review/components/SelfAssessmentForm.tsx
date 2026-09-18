@@ -14,8 +14,8 @@ interface SelfAssessmentFormProps {
   assessment: Assessment;
   employee?: Employee;
   managerName?: string;
-  onSaveDraft: (input: SelfAssessmentInput) => void;
-  onSubmit: (input: SelfAssessmentInput) => void;
+  onSaveDraft: (input: SelfAssessmentInput) => void | Promise<unknown>;
+  onSubmit: (input: SelfAssessmentInput) => void | Promise<unknown>;
 }
 
 function buildInitialRatings(assessment: Assessment) {
@@ -48,6 +48,8 @@ export default function SelfAssessmentForm({
   const [comments, setComments] = useState(assessment.employeeComments);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [savedLabel, setSavedLabel] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const setRating = (dimensionKey: string, score: number) => {
     setRatings((prev) => ({ ...prev, [dimensionKey]: score }));
@@ -84,6 +86,7 @@ export default function SelfAssessmentForm({
     },
   ];
   const canSubmit = checks.every((c) => c.ok);
+  const busy = saving || submitting;
 
   const buildInput = (): SelfAssessmentInput => ({
     responsibilities: validResponsibilities.map((r, index) => ({
@@ -98,9 +101,31 @@ export default function SelfAssessmentForm({
     employeeComments: comments.trim(),
   });
 
-  const handleConfirmSubmit = () => {
-    setReviewOpen(false);
-    onSubmit(buildInput());
+  const handleSaveDraft = async () => {
+    if (busy) return;
+    setSaving(true);
+    try {
+      await onSaveDraft(buildInput());
+      setSavedLabel(
+        new Date().toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleConfirmSubmit = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await onSubmit(buildInput());
+      setReviewOpen(false);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -129,15 +154,9 @@ export default function SelfAssessmentForm({
               variant="outline"
               size="sm"
               icon="ri-save-line"
-              onClick={() => {
-                onSaveDraft(buildInput());
-                setSavedLabel(
-                  new Date().toLocaleTimeString("en-GB", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  }),
-                );
-              }}
+              loading={saving}
+              disabled={busy}
+              onClick={() => void handleSaveDraft()}
             >
               Save draft
             </Button>
@@ -145,7 +164,7 @@ export default function SelfAssessmentForm({
               variant="primary"
               size="sm"
               icon="ri-send-plane-line"
-              disabled={!canSubmit}
+              disabled={!canSubmit || busy}
               onClick={() => setReviewOpen(true)}
             >
               Review &amp; submit
@@ -239,7 +258,7 @@ export default function SelfAssessmentForm({
             variant="primary"
             size="sm"
             icon="ri-send-plane-line"
-            disabled={!canSubmit}
+            disabled={!canSubmit || busy}
             onClick={() => setReviewOpen(true)}
           >
             Review &amp; submit
@@ -249,8 +268,11 @@ export default function SelfAssessmentForm({
 
       <ReviewSubmitModal
         open={reviewOpen}
-        onClose={() => setReviewOpen(false)}
-        onConfirm={handleConfirmSubmit}
+        onClose={() => {
+          if (!submitting) setReviewOpen(false);
+        }}
+        onConfirm={() => void handleConfirmSubmit()}
+        loading={submitting}
         employee={employee}
         managerName={managerName}
         input={buildInput()}

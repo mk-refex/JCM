@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import type { InitialClarityResponse } from "@/types/domain";
 
 interface InitialCheckProps {
-  onResolve: (response: InitialClarityResponse) => void;
+  onResolve: (response: InitialClarityResponse) => void | Promise<unknown>;
 }
 
 const OPTIONS: Array<{
@@ -74,6 +74,17 @@ const OPTIONS: Array<{
 
 export default function InitialCheck({ onResolve }: InitialCheckProps) {
   const [selected, setSelected] = useState<InitialClarityResponse | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleConfirm = async () => {
+    if (!selected || submitting) return;
+    setSubmitting(true);
+    try {
+      await onResolve(selected);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <SectionCard
@@ -99,10 +110,12 @@ export default function InitialCheck({ onResolve }: InitialCheckProps) {
               <button
                 key={option.value}
                 type="button"
+                disabled={submitting}
                 onClick={() => setSelected(option.value)}
                 className={cn(
                   "flex cursor-pointer flex-col gap-3 rounded-lg border p-4 text-left transition-colors",
                   active ? option.tone.active : option.tone.idle,
+                  submitting && "cursor-not-allowed opacity-70",
                 )}
               >
                 <div className="flex items-center justify-between">
@@ -148,8 +161,9 @@ export default function InitialCheck({ onResolve }: InitialCheckProps) {
           <Button
             variant="primary"
             icon="ri-arrow-right-line"
-            disabled={!selected}
-            onClick={() => selected && onResolve(selected)}
+            loading={submitting}
+            disabled={!selected || submitting}
+            onClick={() => void handleConfirm()}
           >
             Confirm and continue
           </Button>
