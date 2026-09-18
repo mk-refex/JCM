@@ -193,7 +193,7 @@ export default function ReviewPage() {
             bullets={[
               "Your manager cannot see your ratings or comments until after they submit.",
               "You will be notified the moment the manager assessment is completed.",
-              "This stage carries a 3 working day SLA.",
+              "This stage is due by 25 Sep 2026.",
             ]}
             actions={caseLink}
           />

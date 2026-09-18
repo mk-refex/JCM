@@ -330,35 +330,58 @@ export const ALIGNMENT_META: Record<
   },
 };
 
-/** Working-day SLA configuration (from the specification). */
-export const SLA_CONFIG: Record<string, { label: string; days: number }> = {
+/** Fixed campaign SLA windows (calendar dates, not working-day offsets). */
+export type SlaStageConfig = {
+  label: string;
+  owner: string;
+  /** Inclusive window start (YYYY-MM-DD). */
+  openFrom: string;
+  /** Inclusive due date (YYYY-MM-DD). */
+  dueOn: string;
+};
+
+export const SLA_CONFIG: Record<string, SlaStageConfig> = {
+  INITIAL_CLARITY_CHECK: {
+    label: "Initial Role Clarity Check",
+    owner: "Employee",
+    openFrom: "2026-09-18",
+    dueOn: "2026-09-22",
+  },
   SELF_ASSESSMENT_PENDING: {
     label: "Employee Self Assessment",
-    days: 3,
+    owner: "Employee",
+    openFrom: "2026-09-18",
+    dueOn: "2026-09-22",
   },
   MANAGER_ASSESSMENT_PENDING: {
     label: "Manager Assessment",
-    days: 3,
+    owner: "Manager",
+    openFrom: "2026-09-18",
+    dueOn: "2026-09-25",
   },
   EMPLOYEE_ALIGNMENT_PENDING: {
     label: "Employee Alignment Check",
-    days: 2,
+    owner: "Employee",
+    openFrom: "2026-09-18",
+    dueOn: "2026-09-25",
   },
   ROLE_ALIGNMENT_REQUIRED: {
     label: "Role Alignment Conversation",
-    days: 3,
+    owner: "HOD / HRBP",
+    openFrom: "2026-09-18",
+    dueOn: "2026-09-29",
   },
   ROLE_ALIGNMENT_IN_PROGRESS: {
     label: "Role Alignment Conversation",
-    days: 3,
+    owner: "HOD / HRBP",
+    openFrom: "2026-09-18",
+    dueOn: "2026-09-29",
   },
   HOD_SIGNOFF_PENDING: {
     label: "HOD Final Sign-off",
-    days: 2,
-  },
-  INITIAL_CLARITY_CHECK: {
-    label: "Initial Role Clarity Check",
-    days: 1,
+    owner: "HOD",
+    openFrom: "2026-09-18",
+    dueOn: "2026-09-29",
   },
 };
 

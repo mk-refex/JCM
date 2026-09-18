@@ -5,6 +5,7 @@ import ProgressStepper from "@/components/base/ProgressStepper";
 import { useApp } from "@/store/AppContext";
 import { actionSectionsFor } from "@/services/assessmentService";
 import { effectiveSla } from "@/lib/metrics";
+import { normalizeSla } from "@/lib/sla";
 import { progressPercent } from "@/lib/workflow";
 import { formatDate } from "@/lib/utils";
 import { WORKFLOW_STATUS_META } from "@/constants/clarity";
@@ -50,7 +51,7 @@ export default function MyReviewCard({ reviews }: MyReviewCardProps) {
             <SlaBadge status={effectiveSla(active)} />
             <span className="inline-flex items-center gap-1.5 rounded-full bg-background-50 px-2.5 py-1 font-label text-xs text-foreground-600">
               <i className="ri-calendar-line text-sm" />
-              Due {formatDate(active.sla.dueAt)}
+              Due {formatDate(normalizeSla(active.sla, active.status)?.dueAt)}
             </span>
           </div>
         </div>

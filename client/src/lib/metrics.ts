@@ -8,16 +8,21 @@ import {
   overallGapOf,
   round,
 } from "@/lib/rag";
-import { computeAgeingDays, computeSlaStatus } from "@/lib/sla";
+import { computeAgeingDays, computeSlaStatus, normalizeSla } from "@/lib/sla";
 import type { Assessment, Employee, RagStatus, SlaStatus } from "@/types/domain";
 
 export function effectiveSla(a: Assessment): SlaStatus {
   if (a.completedAt) return "COMPLETED";
-  return computeSlaStatus(a.sla.dueAt, null);
+  const sla = normalizeSla(a.sla, a.status);
+  return computeSlaStatus(sla?.dueAt ?? null, null);
 }
 
 export function effectiveAgeing(a: Assessment): number {
-  return computeAgeingDays(a.sla.assignedAt, a.completedAt ?? a.sla.completedAt);
+  const sla = normalizeSla(a.sla, a.status);
+  return computeAgeingDays(
+    sla?.assignedAt ?? a.sla.assignedAt,
+    a.completedAt ?? sla?.completedAt ?? a.sla.completedAt,
+  );
 }
 
 export function derivedEmployeeAverage(a: Assessment): number | null {

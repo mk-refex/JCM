@@ -11,9 +11,13 @@ import userRoutes from "./routes/users.js";
 import employeeRoutes from "./routes/employees.js";
 import assessmentRoutes from "./routes/assessments.js";
 import ssoRoutes from "./routes/sso.js";
+import settingsRoutes from "./routes/settings.js";
 import { recordSyncError, syncUsersFromMaster } from "./services/userMaster.js";
 import { syncEmployeesFromUsers } from "./services/employees.js";
 import { ensureAssessmentsForEmployees } from "./services/assessments.js";
+import { seedDefaultSettings } from "./services/settings.js";
+import { refreshSlaCache } from "./lib/sla.js";
+import { startSchedulers } from "./jobs/scheduler.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,6 +44,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/assessments", assessmentRoutes);
 app.use("/api/sso-providers", ssoRoutes);
+app.use("/api/settings", settingsRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);
@@ -69,6 +74,8 @@ async function hydrateOrganisation() {
 
 async function start() {
   await initDatabase();
+  await seedDefaultSettings();
+  await refreshSlaCache();
   try {
     const db = await getPool();
     const [[{ total }]] = await db.query("SELECT COUNT(*) AS total FROM users");
@@ -84,6 +91,8 @@ async function start() {
     await recordSyncError(message);
     console.error(message);
   }
+
+  startSchedulers();
 
   app.listen(config.port, () => {
     console.log(`JCM API listening on http://localhost:${config.port}`);

@@ -6,6 +6,7 @@ import Pagination from "@/components/base/Pagination";
 import { usePagination } from "@/hooks/usePagination";
 import { useApp } from "@/store/AppContext";
 import { derivedGap, derivedRag, effectiveSla } from "@/lib/metrics";
+import { normalizeSla } from "@/lib/sla";
 import { formatDate } from "@/lib/utils";
 import type { Assessment } from "@/types/domain";
 
@@ -160,7 +161,7 @@ export default function AssessmentTable({
                     <div className="flex flex-col gap-1.5">
                       <SlaBadge status={sla} />
                       <span className="text-xs text-foreground-500">
-                        {formatDate(a.sla.dueAt)}
+                        {formatDate(normalizeSla(a.sla, a.status)?.dueAt)}
                       </span>
                     </div>
                   </td>

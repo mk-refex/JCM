@@ -20,6 +20,7 @@ import type {
   User,
 } from "@/types/domain";
 import { nowIso, uid } from "@/lib/utils";
+import { setRuntimeSlaStages } from "@/lib/sla";
 import { visibleAssessmentsFor } from "@/services/assessmentService";
 import {
   fetchCurrentAdmin,
@@ -27,6 +28,7 @@ import {
   fetchMasterUsers,
   fetchAssessmentAudit,
   fetchWorkspace,
+  fetchSlaCampaign,
   getToken,
   loginAdmin,
   markAllNotificationsReadApi,
@@ -187,7 +189,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const loadWorkspace = useCallback(async () => {
-    const result = await fetchWorkspace();
+    const [result, sla] = await Promise.all([
+      fetchWorkspace(),
+      fetchSlaCampaign().catch(() => null),
+    ]);
+    if (sla?.stages) setRuntimeSlaStages(sla.stages);
     persistUser(result.user);
     setEmployees(result.employees);
     setAssessments(result.assessments);

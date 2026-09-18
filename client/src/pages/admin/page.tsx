@@ -24,11 +24,12 @@ import {
   RATING_SCALE,
   ROLE_META,
   SHARED_SERVICES_FUNCTIONS,
-  SLA_CONFIG,
 } from "@/constants/clarity";
 import { cn } from "@/lib/utils";
 import type { Employee } from "@/types/domain";
 import SsoConfigPanel from "@/pages/admin/SsoConfigPanel";
+import SlaConfigPanel from "@/pages/admin/SlaConfigPanel";
+import InitialCheckDigestPanel from "@/pages/admin/InitialCheckDigestPanel";
 
 const TABS = [
   { key: "employees", label: "Employees", icon: "ri-user-line" },
@@ -65,13 +66,6 @@ export default function AdminPage() {
   const [editHrbpId, setEditHrbpId] = useState<string | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
   const [sendingReminders, setSendingReminders] = useState(false);
-  const [notifications, setNotifications] = useState({
-    assigned: true,
-    alignment: true,
-    slaReminder: true,
-    slaBreach: true,
-    closure: true,
-  });
 
   const filteredEmployees = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -195,7 +189,7 @@ export default function AdminPage() {
       <PageHeader
         eyebrow="HR Admin"
         title="Master data & configuration"
-        description="Manage employees, users and roles, organisation reference data, working-day SLA, notification settings and the role clarity dimensions."
+        description="Manage employees, users and roles, organisation reference data, campaign SLA dates, notification settings and the role clarity dimensions."
       />
 
       <div className="grid grid-cols-1 gap-2 lg:grid-cols-4">
@@ -510,124 +504,46 @@ export default function AdminPage() {
       )}
 
       {tab === "sla" && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="flex flex-col gap-6">
+          <SlaConfigPanel />
+          <InitialCheckDigestPanel />
           <SectionCard
-            title="Working-day SLA"
-            description="Due dates are calculated in working days, excluding weekends."
-            icon="ri-timer-line"
-            bodyClassName="p-0"
+            title="Stage due / breach reminders"
+            description="Send the existing per-case SLA reminders to employees, managers or HODs whose current stage is due soon or breached."
+            icon="ri-alarm-warning-line"
           >
-            <div className="overflow-x-auto scrollbar-slim">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-background-200">
-                    {["Stage", "Owner", "SLA (working days)"].map((h) => (
-                      <th
-                        key={h}
-                        className="px-4 py-3 font-label text-xs font-semibold uppercase tracking-wide text-foreground-500"
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(SLA_CONFIG).map(([key, value]) => (
-                    <tr key={key} className="border-b border-background-100">
-                      <td className="px-4 py-3 text-sm font-medium text-foreground-800">
-                        {value.label}
-                      </td>
-                      <td className="px-4 py-3 text-xs text-foreground-500">{key}</td>
-                      <td className="px-4 py-3">
-                        <Badge tone="progress">{value.days} days</Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </SectionCard>
-
-          <SectionCard
-            title="Notification settings"
-            description="Channel switches for the reusable notification service."
-            icon="ri-notification-3-line"
-          >
-            <ul className="flex flex-col gap-3">
-              {[
-                { key: "assigned", label: "Self / manager assessment assigned" },
-                { key: "alignment", label: "Alignment and not-aligned events" },
-                { key: "slaReminder", label: "SLA reminders" },
-                { key: "slaBreach", label: "SLA breach alerts" },
-                { key: "closure", label: "Final closure notification" },
-              ].map((item) => (
-                <li
-                  key={item.key}
-                  className="flex items-center justify-between gap-4 rounded-md border border-background-200 bg-background-100 p-3"
-                >
-                  <span className="text-sm text-foreground-800">{item.label}</span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setNotifications((prev) => ({
-                        ...prev,
-                        [item.key]: !prev[item.key as keyof typeof prev],
-                      }))
-                    }
-                    className={cn(
-                      "relative h-6 w-11 cursor-pointer rounded-full transition-colors",
-                      notifications[item.key as keyof typeof notifications]
-                        ? "bg-primary-500"
-                        : "bg-background-300",
-                    )}
-                    aria-label={`Toggle ${item.label}`}
-                  >
-                    <span
-                      className={cn(
-                        "absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all",
-                        notifications[item.key as keyof typeof notifications]
-                          ? "left-[22px]"
-                          : "left-0.5",
-                      )}
-                    />
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-4 rounded-md bg-secondary-50 p-3 text-xs text-foreground-700">
-              Automated reminders stop automatically for a stage as soon as the
-              responsible stakeholder completes their action.
+            <p className="mb-4 text-xs text-foreground-600">
+              Separate from the Initial Check digest above. This targets people who
+              already started a stage but have not completed it by the due date.
             </p>
-            <div className="mt-4">
-              <Button
-                icon="ri-mail-send-line"
-                loading={sendingReminders}
-                onClick={() => {
-                  setSendingReminders(true);
-                  void dispatchSlaReminders()
-                    .then((result) => {
-                      pushToast({
-                        tone: "success",
-                        title: "Reminder: Role Clarity Action Pending",
-                        message: `${result.sent} reminder${result.sent === 1 ? "" : "s"} dispatched for due or overdue actions.`,
-                      });
-                    })
-                    .catch((error) => {
-                      pushToast({
-                        tone: "error",
-                        title: "Reminders failed",
-                        message:
-                          error instanceof Error
-                            ? error.message
-                            : "Could not dispatch SLA reminders.",
-                      });
-                    })
-                    .finally(() => setSendingReminders(false));
-                }}
-              >
-                Send pending SLA reminders
-              </Button>
-            </div>
+            <Button
+              icon="ri-mail-send-line"
+              loading={sendingReminders}
+              onClick={() => {
+                setSendingReminders(true);
+                void dispatchSlaReminders()
+                  .then((result) => {
+                    pushToast({
+                      tone: "success",
+                      title: "Reminder: Role Clarity Action Pending",
+                      message: `${result.sent} reminder${result.sent === 1 ? "" : "s"} dispatched for due or overdue actions.`,
+                    });
+                  })
+                  .catch((error) => {
+                    pushToast({
+                      tone: "error",
+                      title: "Reminders failed",
+                      message:
+                        error instanceof Error
+                          ? error.message
+                          : "Could not dispatch SLA reminders.",
+                    });
+                  })
+                  .finally(() => setSendingReminders(false));
+              }}
+            >
+              Send pending SLA reminders
+            </Button>
           </SectionCard>
         </div>
       )}

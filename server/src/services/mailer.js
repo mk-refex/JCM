@@ -413,4 +413,101 @@ function reminderAudience(status) {
   return "EMPLOYEE";
 }
 
+export async function sendInitialCheckDigestMail({
+  assessmentId,
+  recipients,
+  subject,
+  bodyIntro,
+  bodyOutro,
+  pendingCount = 0,
+  trigger = "manual",
+  attachment = null,
+}) {
+  const paragraphs = [
+    bodyIntro,
+    `Active employees yet to start the Initial Role Clarity Check: ${pendingCount}.`,
+    attachment
+      ? "Please find the attached Excel report. Each sheet is named by workflow status (for example INITIAL_CLARITY_CHECK, SELF_ASSESSMENT_PENDING, MANAGER_ASSESSMENT_PENDING)."
+      : null,
+    `Trigger: ${trigger === "auto" ? "Scheduled" : "Manual"}.`,
+  ].filter(Boolean);
+  const closing = [bodyOutro];
+  const tx = getTransporter();
+  const sentTo = [];
+  const attachments = attachment
+    ? [
+        {
+          filename: attachment.filename,
+          content: attachment.content,
+          contentType: attachment.contentType,
+        },
+      ]
+    : undefined;
+
+  for (const person of recipients) {
+    const dear = displayName(person, "Colleague");
+    const text = renderText({
+      dear,
+      paragraphs,
+      closing,
+    });
+    const html = renderHtml({
+      dear,
+      title: subject,
+      paragraphs,
+      closing,
+    });
+
+    if (!tx) {
+      console.warn("SMTP is not configured. Digest email was not sent:", subject);
+      await recordMailLog({
+        assessmentId,
+        recipients: [person.email],
+        subject,
+        body: text,
+        status: "skipped",
+        error: "SMTP is not configured.",
+      });
+      continue;
+    }
+
+    try {
+      await tx.sendMail({
+        from: config.mail.from,
+        to: person.email,
+        cc: config.mail.cc.length ? config.mail.cc.join(", ") : undefined,
+        subject,
+        text,
+        html,
+        attachments,
+      });
+      await recordMailLog({
+        assessmentId,
+        recipients: [person.email],
+        subject,
+        body: text,
+        status: "sent",
+      });
+      sentTo.push(person.email);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Mail send failed.";
+      console.error("Digest email failed:", message);
+      await recordMailLog({
+        assessmentId,
+        recipients: [person.email],
+        subject,
+        body: text,
+        status: "failed",
+        error: message,
+      });
+    }
+  }
+
+  return {
+    sent: sentTo.length > 0,
+    recipients: sentTo,
+    reason: tx ? undefined : "SMTP not configured",
+  };
+}
+
 export { COPY };

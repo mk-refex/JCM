@@ -15,6 +15,7 @@ import {
   effectiveSla,
 } from "@/lib/metrics";
 import { progressPercent } from "@/lib/workflow";
+import { normalizeSla } from "@/lib/sla";
 import { formatDate } from "@/lib/utils";
 import { WORKFLOW_STATUS_META } from "@/constants/clarity";
 
@@ -152,7 +153,7 @@ export default function EmployeeDashboard() {
                   SLA due
                 </p>
                 <p className="font-heading text-sm font-semibold text-foreground-950 sm:mt-0.5">
-                  {formatDate(active.sla.dueAt)}
+                  {formatDate(normalizeSla(active.sla, active.status)?.dueAt)}
                 </p>
               </div>
               <div className="flex items-center justify-between rounded-md border border-background-200 bg-background-100 px-2.5 py-2 sm:block">

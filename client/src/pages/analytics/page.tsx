@@ -264,7 +264,7 @@ export default function AnalyticsPage() {
 
           <SectionCard
             title="SLA adherence"
-            description="Working-day SLA position across open cases. Click a row to open those assessments."
+            description="Campaign SLA position across open cases. Click a row to open those assessments."
             icon="ri-timer-line"
             bodyClassName="p-0"
           >

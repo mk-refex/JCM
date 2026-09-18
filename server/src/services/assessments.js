@@ -1,6 +1,6 @@
 import { getPool } from "../db.js";
 import { COPY } from "../lib/copy.js";
-import { computeSlaStatus, nowIso, uid } from "../lib/sla.js";
+import { computeSlaStatus, normalizeSla, nowIso, uid } from "../lib/sla.js";
 import {
   loadStakeholders,
   sendAlignedEmails,
@@ -88,7 +88,7 @@ export function rowToAssessment(row) {
     hodComments: data.hodComments ?? "",
     hrbpComments: data.hrbpComments ?? "",
     hodSignoff: data.hodSignoff ?? null,
-    sla: data.sla ?? createSla("INITIAL_CLARITY_CHECK"),
+    sla: normalizeSla(data.sla, row.status) ?? createSla("INITIAL_CLARITY_CHECK"),
     createdAt: toIso(row.created_at) || nowIso(),
     updatedAt: toIso(row.updated_at) || nowIso(),
     completedAt: toIso(row.completed_at),

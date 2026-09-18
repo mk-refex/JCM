@@ -1,5 +1,29 @@
-import { SLA_CONFIG } from "@/constants/clarity";
-import type { SlaStatus } from "@/types/domain";
+import { SLA_CONFIG, type SlaStageConfig } from "@/constants/clarity";
+import type { SlaRecord, SlaStatus } from "@/types/domain";
+
+let runtimeStages: Record<string, SlaStageConfig> = { ...SLA_CONFIG };
+
+export function setRuntimeSlaStages(
+  stages: Record<string, Partial<SlaStageConfig>> | null | undefined,
+) {
+  const next: Record<string, SlaStageConfig> = { ...SLA_CONFIG };
+  if (stages) {
+    for (const [key, defaults] of Object.entries(SLA_CONFIG)) {
+      const row = stages[key] || {};
+      next[key] = {
+        label: defaults.label,
+        owner: defaults.owner,
+        openFrom: row.openFrom || defaults.openFrom,
+        dueOn: row.dueOn || defaults.dueOn,
+      };
+    }
+  }
+  runtimeStages = next;
+}
+
+export function getRuntimeSlaStages() {
+  return runtimeStages;
+}
 
 export function isWeekend(date: Date): boolean {
   const day = date.getDay();
@@ -10,6 +34,12 @@ export function startOfDay(date: Date): Date {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
   return d;
+}
+
+/** Parse a campaign calendar date (YYYY-MM-DD) as local start of day. */
+export function parseCampaignDate(yyyyMmDd: string): Date {
+  const [year, month, day] = yyyyMmDd.split("-").map(Number);
+  return startOfDay(new Date(year, month - 1, day));
 }
 
 /** Add N working days (Mon–Fri) to a date. */
@@ -42,8 +72,12 @@ export function workingDaysBetween(
   return forward ? count : -count;
 }
 
-export function slaDaysForStage(stage: string): number {
-  return SLA_CONFIG[stage]?.days ?? 3;
+export function slaDueOnForStage(stage: string): string | null {
+  return runtimeStages[stage]?.dueOn ?? null;
+}
+
+export function slaOpenFromForStage(stage: string): string | null {
+  return runtimeStages[stage]?.openFrom ?? null;
 }
 
 export function computeSlaStatus(
@@ -71,6 +105,29 @@ export function computeAgeingDays(
   return Math.max(0, workingDaysBetween(assignedAt, end));
 }
 
+/** Fixed campaign due date for a stage (falls back to +3 working days). */
 export function buildDueDate(assignedAt: string, stage: string): string {
-  return addWorkingDays(assignedAt, slaDaysForStage(stage)).toISOString();
+  const dueOn = slaDueOnForStage(stage);
+  if (dueOn) return parseCampaignDate(dueOn).toISOString();
+  return addWorkingDays(assignedAt, 3).toISOString();
+}
+
+/** Keep stored SLA records aligned with the fixed campaign calendar. */
+export function normalizeSla(
+  sla: SlaRecord | null | undefined,
+  stageFallback?: string,
+): SlaRecord | null {
+  if (!sla && !stageFallback) return null;
+  const stage = sla?.stage || stageFallback || "";
+  const assignedAt = sla?.assignedAt ?? new Date().toISOString();
+  const dueAt = buildDueDate(assignedAt, stage);
+  const completedAt = sla?.completedAt ?? null;
+  return {
+    stage,
+    assignedAt,
+    dueAt,
+    completedAt,
+    slaStatus: computeSlaStatus(dueAt, completedAt),
+    ageingDays: computeAgeingDays(assignedAt, completedAt),
+  };
 }

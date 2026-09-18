@@ -210,6 +210,67 @@ export function dispatchSlaReminders() {
   });
 }
 
+export type SlaStageSetting = {
+  label: string;
+  owner: string;
+  openFrom: string;
+  dueOn: string;
+};
+
+export type SlaCampaignSettings = {
+  stages: Record<string, SlaStageSetting>;
+};
+
+export type InitialCheckDigestSettings = {
+  enabled: boolean;
+  timezone: string;
+  scheduleTimes: string[];
+  scheduleDates: string[];
+  activeFrom: string;
+  activeTo: string;
+  recipientIds: string[];
+  extraEmails: string;
+  subject: string;
+  bodyIntro: string;
+  bodyOutro: string;
+  lastAutoSentKey?: string | null;
+  lastAutoSentAt?: string | null;
+};
+
+export function fetchSlaCampaign() {
+  return request<SlaCampaignSettings>("/api/settings/sla");
+}
+
+export function saveSlaCampaign(input: SlaCampaignSettings) {
+  return request<SlaCampaignSettings>("/api/settings/sla", {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+export function fetchInitialCheckDigest() {
+  return request<InitialCheckDigestSettings>("/api/settings/initial-check-digest");
+}
+
+export function saveInitialCheckDigest(input: Partial<InitialCheckDigestSettings>) {
+  return request<InitialCheckDigestSettings>("/api/settings/initial-check-digest", {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+export function dispatchInitialCheckDigest() {
+  return request<{
+    sent: boolean;
+    recipientCount: number;
+    pendingCount: number;
+    recipients: string[];
+    trigger: string;
+  }>("/api/settings/initial-check-digest/dispatch", {
+    method: "POST",
+  });
+}
+
 export function fetchMasterUsers(query = "", page = 1, limit = 10000) {
   const params = new URLSearchParams({
     q: query,

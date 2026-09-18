@@ -1,12 +1,35 @@
-const SLA_CONFIG = {
-  SELF_ASSESSMENT_PENDING: { days: 3 },
-  MANAGER_ASSESSMENT_PENDING: { days: 3 },
-  EMPLOYEE_ALIGNMENT_PENDING: { days: 2 },
-  ROLE_ALIGNMENT_REQUIRED: { days: 3 },
-  ROLE_ALIGNMENT_IN_PROGRESS: { days: 3 },
-  HOD_SIGNOFF_PENDING: { days: 2 },
-  INITIAL_CLARITY_CHECK: { days: 1 },
+import { getSlaCampaign } from "../services/settings.js";
+
+const FALLBACK_SLA = {
+  INITIAL_CLARITY_CHECK: { openFrom: "2026-09-18", dueOn: "2026-09-22" },
+  SELF_ASSESSMENT_PENDING: { openFrom: "2026-09-18", dueOn: "2026-09-22" },
+  MANAGER_ASSESSMENT_PENDING: { openFrom: "2026-09-18", dueOn: "2026-09-25" },
+  EMPLOYEE_ALIGNMENT_PENDING: { openFrom: "2026-09-18", dueOn: "2026-09-25" },
+  ROLE_ALIGNMENT_REQUIRED: { openFrom: "2026-09-18", dueOn: "2026-09-29" },
+  ROLE_ALIGNMENT_IN_PROGRESS: { openFrom: "2026-09-18", dueOn: "2026-09-29" },
+  HOD_SIGNOFF_PENDING: { openFrom: "2026-09-18", dueOn: "2026-09-29" },
 };
+
+let slaStages = { ...FALLBACK_SLA };
+
+export function invalidateSlaCache() {
+  // Will be refreshed on next refreshSlaCache / save
+  slaStages = { ...FALLBACK_SLA };
+}
+
+export async function refreshSlaCache() {
+  try {
+    const campaign = await getSlaCampaign();
+    slaStages = campaign.stages || { ...FALLBACK_SLA };
+  } catch {
+    slaStages = { ...FALLBACK_SLA };
+  }
+  return slaStages;
+}
+
+export function getSlaStages() {
+  return slaStages;
+}
 
 function isWeekend(date) {
   const day = date.getDay();
@@ -17,6 +40,11 @@ function startOfDay(date) {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
   return d;
+}
+
+export function parseCampaignDate(yyyyMmDd) {
+  const [year, month, day] = String(yyyyMmDd).split("-").map(Number);
+  return startOfDay(new Date(year, month - 1, day));
 }
 
 export function addWorkingDays(from, days) {
@@ -55,8 +83,32 @@ export function computeSlaStatus(dueAt, completedAt, reference = new Date()) {
   return "ON_TRACK";
 }
 
+export function computeAgeingDays(assignedAt, completedAt, reference = new Date()) {
+  if (!assignedAt) return 0;
+  const end = completedAt ? new Date(completedAt) : reference;
+  return Math.max(0, workingDaysBetween(assignedAt, end));
+}
+
 export function buildDueDate(assignedAt, stage) {
-  return addWorkingDays(assignedAt, SLA_CONFIG[stage]?.days ?? 3).toISOString();
+  const dueOn = slaStages[stage]?.dueOn;
+  if (dueOn) return parseCampaignDate(dueOn).toISOString();
+  return addWorkingDays(assignedAt, 3).toISOString();
+}
+
+export function normalizeSla(sla, stageFallback) {
+  if (!sla && !stageFallback) return null;
+  const stage = sla?.stage || stageFallback || "";
+  const assignedAt = sla?.assignedAt || nowIso();
+  const dueAt = buildDueDate(assignedAt, stage);
+  const completedAt = sla?.completedAt ?? null;
+  return {
+    stage,
+    assignedAt,
+    dueAt,
+    completedAt,
+    slaStatus: computeSlaStatus(dueAt, completedAt),
+    ageingDays: computeAgeingDays(assignedAt, completedAt),
+  };
 }
 
 export function nowIso() {
@@ -66,3 +118,5 @@ export function nowIso() {
 export function uid(prefix = "id") {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}${Date.now().toString(36).slice(-4)}`;
 }
+
+export { FALLBACK_SLA as SLA_CONFIG };

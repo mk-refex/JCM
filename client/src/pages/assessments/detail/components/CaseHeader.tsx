@@ -14,6 +14,7 @@ import {
 } from "@/pages/assessments/detail/components/helpers";
 import { WORKFLOW_STATUS_META } from "@/constants/clarity";
 import { formatDate } from "@/lib/utils";
+import { normalizeSla } from "@/lib/sla";
 import type { Assessment, Employee } from "@/types/domain";
 import { useApp } from "@/store/AppContext";
 
@@ -64,7 +65,7 @@ export default function CaseHeader({ assessment, employee }: CaseHeaderProps) {
           <div className="grid shrink-0 grid-cols-2 gap-3 sm:grid-cols-3 lg:w-[420px]">
             {[
               { label: "Completion", value: `${progressLabel(assessment.status)}%` },
-              { label: "SLA due", value: formatDate(assessment.sla.dueAt) },
+              { label: "SLA due", value: formatDate(normalizeSla(assessment.sla, assessment.status)?.dueAt) },
               { label: "Owner now", value: WORKFLOW_STATUS_META[assessment.status].stageOwner },
             ].map((item) => (
               <div
