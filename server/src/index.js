@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { config } from "./config.js";
 import { getPool, initDatabase } from "./db.js";
 import authRoutes from "./routes/auth.js";
+import ssoAuthRoutes from "./routes/ssoAuth.js";
 import userRoutes from "./routes/users.js";
 import employeeRoutes from "./routes/employees.js";
 import assessmentRoutes from "./routes/assessments.js";
@@ -33,6 +34,7 @@ app.get("/api/health", async (_req, res) => {
   }
 });
 
+app.use("/auth", ssoAuthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/employees", employeeRoutes);
@@ -47,8 +49,8 @@ app.use((err, _req, res, _next) => {
 if (existsSync(clientPath)) {
   app.use(express.static(clientPath));
 
-  // SPA fallback for client-side routes (skip API)
-  app.get(/^(?!\/api).*/, (_req, res) => {
+  // SPA fallback for client-side routes (skip API + SSO auth)
+  app.get(/^(?!\/(api|auth)).*/, (_req, res) => {
     res.sendFile(path.join(clientPath, "index.html"));
   });
 } else {

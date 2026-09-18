@@ -283,7 +283,7 @@ export type SsoProviderInput = {
 };
 
 export function fetchPublicSsoProviders() {
-  return request<PublicSsoProvider[]>("/api/auth/sso-providers");
+  return request<PublicSsoProvider[]>("/auth/sso-providers");
 }
 
 export function fetchSsoProviders() {

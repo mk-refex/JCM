@@ -24,7 +24,7 @@ const SSO_ERROR_MESSAGES: Record<string, string> = {
 export default function Login() {
   const { login, currentUser, authReady } = useApp();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -36,12 +36,20 @@ export default function Login() {
     const code = searchParams.get("error");
     if (code) {
       setError(SSO_ERROR_MESSAGES[code] || "SSO sign-in failed. Please try again.");
+      setSearchParams(
+        (params) => {
+          const next = new URLSearchParams(params);
+          next.delete("error");
+          return next;
+        },
+        { replace: true },
+      );
     }
-  }, [searchParams]);
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     void fetchPublicSsoProviders()
-      .then(setProviders)
+      .then((list) => setProviders(Array.isArray(list) ? list : []))
       .catch(() => setProviders([]));
   }, []);
 
@@ -65,11 +73,6 @@ export default function Login() {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const startSso = (provider: string) => {
-    const state = encodeURIComponent(window.location.origin);
-    window.location.href = `/api/auth/sso/${encodeURIComponent(provider)}?state=${state}`;
   };
 
   return (
@@ -202,26 +205,30 @@ export default function Login() {
                 </span>
                 <div className="h-px flex-1 bg-background-200" />
               </div>
-              <div className="mt-4 flex flex-col gap-2">
-                {providers.map((provider) => (
-                  <button
-                    key={provider.provider}
-                    type="button"
-                    onClick={() => startSso(provider.provider)}
-                    className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-background-300 bg-background-50 px-4 font-label text-sm font-medium text-foreground-800 hover:bg-background-100"
-                  >
-                    {provider.iconUrl ? (
-                      <img
-                        src={provider.iconUrl}
-                        alt=""
-                        className="h-5 w-5 object-contain"
-                      />
-                    ) : (
-                      <i className="ri-shield-keyhole-line text-lg text-primary-600" />
-                    )}
-                    {provider.displayName || provider.provider}
-                  </button>
-                ))}
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+                {providers.map((provider) => {
+                  const label = provider.displayName?.trim() || provider.provider;
+                  const href = `/auth/sso/${encodeURIComponent(provider.provider)}?state=${encodeURIComponent(window.location.origin)}`;
+                  return (
+                    <a
+                      key={provider.provider}
+                      href={href}
+                      title={label}
+                      aria-label={label}
+                      className="inline-flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border border-background-300 bg-background-50 p-0 hover:bg-background-100"
+                    >
+                      {provider.iconUrl?.trim() ? (
+                        <img
+                          src={provider.iconUrl}
+                          alt=""
+                          className="h-7 w-7 object-contain"
+                        />
+                      ) : (
+                        <i className="ri-shield-keyhole-line text-2xl text-primary-600" />
+                      )}
+                    </a>
+                  );
+                })}
               </div>
             </div>
           )}

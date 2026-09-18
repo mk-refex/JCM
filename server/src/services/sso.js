@@ -93,9 +93,8 @@ export function buildCallbackRedirect(config, state, token, userData) {
 
 export function resolveRedirectUri(config, req, provider) {
   if (config.redirect_uri?.trim()) return config.redirect_uri.trim();
-  const host = req.get("x-forwarded-host") || req.get("host");
-  const proto = (req.get("x-forwarded-proto") || req.protocol || "http").split(",")[0].trim();
-  return `${proto}://${host}/api/auth/sso/${encodeURIComponent(provider)}/callback`;
+  const baseUrl = `${req.protocol}://${req.get("host")}`;
+  return `${baseUrl}/auth/sso/${encodeURIComponent(provider)}/callback`;
 }
 
 export async function resolveOidcEndpoints(config) {

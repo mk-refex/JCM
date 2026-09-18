@@ -152,8 +152,8 @@ export default function SsoConfigPanel() {
 
   const callbackHint =
     typeof window !== "undefined"
-      ? `${window.location.origin.replace(/:\d+$/, ":4000")}/api/auth/sso/{provider}/callback`
-      : "/api/auth/sso/{provider}/callback";
+      ? `${window.location.origin.replace(/:\d+$/, ":4000")}/auth/sso/{provider}/callback`
+      : "/auth/sso/{provider}/callback";
 
   return (
     <>
@@ -392,7 +392,7 @@ export default function SsoConfigPanel() {
               className={fieldClass}
               value={form.redirectUri || ""}
               onChange={(e) => setField("redirectUri", e.target.value)}
-              placeholder="Leave empty to auto-generate"
+              placeholder="https://your-api.com/auth/sso/refex-one/callback"
             />
           </label>
           <label className="flex flex-col gap-1.5 sm:col-span-2">
