@@ -2,6 +2,7 @@ import type { RouteObject } from "react-router-dom";
 import { Navigate } from "react-router-dom";
 import NotFound from "@/pages/NotFound";
 import Login from "@/pages/login/page";
+import DeveloperLogin from "@/pages/developer-login/page";
 import SsoCallbackPage from "@/pages/sso-callback/page";
 import AppShell from "@/components/layout/AppShell";
 import Dashboard from "@/pages/dashboard/page";
@@ -23,6 +24,10 @@ const routes: RouteObject[] = [
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/developer-login",
+    element: <DeveloperLogin />,
   },
   {
     path: "/sso/callback",
