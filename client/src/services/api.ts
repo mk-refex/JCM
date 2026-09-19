@@ -72,6 +72,25 @@ export function loginAdmin(email: string, password: string) {
   });
 }
 
+export function requestLoginOtp(email: string) {
+  return request<{
+    ok: boolean;
+    email: string;
+    maskedEmail: string;
+    expiresInSeconds: number;
+  }>("/api/auth/otp/request", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function verifyLoginOtp(email: string, code: string) {
+  return request<{ token: string; user: User }>("/api/auth/otp/verify", {
+    method: "POST",
+    body: JSON.stringify({ email, code }),
+  });
+}
+
 export function fetchCurrentAdmin() {
   return request<{ user: User }>("/api/auth/me");
 }

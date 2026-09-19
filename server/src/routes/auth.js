@@ -6,6 +6,7 @@ import { getPool } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { resolveSessionRole } from "../services/employees.js";
 import { serializeUser } from "../services/userMaster.js";
+import { requestLoginOtp, verifyLoginOtp } from "../services/otpAuth.js";
 
 const router = Router();
 
@@ -36,6 +37,33 @@ async function toUserSession(row) {
     title: record.designation || "Employee",
   };
 }
+
+router.post("/otp/request", async (req, res) => {
+  try {
+    const result = await requestLoginOtp(req.body?.email);
+    return res.json(result);
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message:
+        error instanceof Error
+          ? error.message
+          : "Could not send one-time code.",
+    });
+  }
+});
+
+router.post("/otp/verify", async (req, res) => {
+  try {
+    const result = await verifyLoginOtp(req.body?.email, req.body?.code);
+    return res.json(result);
+  } catch (error) {
+    return res.status(error.status || 500).json({
+      message:
+        error instanceof Error ? error.message : "Could not verify the code.",
+      code: error.code || undefined,
+    });
+  }
+});
 
 router.post("/login", async (req, res) => {
   const identifier = String(req.body?.email || "").trim();

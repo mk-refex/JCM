@@ -143,6 +143,20 @@ CREATE TABLE IF NOT EXISTS app_settings (
   value_json JSON NOT NULL,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS login_otps (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(255) NOT NULL,
+  code_hash VARCHAR(128) NOT NULL,
+  kind VARCHAR(16) NOT NULL,
+  subject_id VARCHAR(191) NOT NULL,
+  attempts INT NOT NULL DEFAULT 0,
+  expires_at DATETIME NOT NULL,
+  consumed_at DATETIME NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_login_otps_email (email),
+  KEY idx_login_otps_expires (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 `;
 
 export async function getPool() {

@@ -510,4 +510,60 @@ export async function sendInitialCheckDigestMail({
   };
 }
 
+export async function sendLoginOtpEmail({ to, name, code, expiresMinutes = 10 }) {
+  const dear = displayName({ name }, "Colleague");
+  const subject = "Your Job Clarity sign-in code";
+  const paragraphs = [
+    `Your one-time sign-in code is ${code}.`,
+    `This code expires in ${expiresMinutes} minutes. Do not share it with anyone.`,
+    "If you did not request this code, you can ignore this email.",
+  ];
+  const text = renderText({ dear, paragraphs });
+  const html = renderHtml({ dear, title: subject, paragraphs });
+  const tx = getTransporter();
+
+  if (!tx) {
+    console.warn("SMTP is not configured. Login OTP was not sent.");
+    await recordMailLog({
+      assessmentId: "LOGIN-OTP",
+      recipients: [to],
+      subject,
+      body: text,
+      status: "skipped",
+      error: "SMTP is not configured.",
+    });
+    return { sent: false, reason: "SMTP not configured" };
+  }
+
+  try {
+    await tx.sendMail({
+      from: config.mail.from,
+      to,
+      subject,
+      text,
+      html,
+    });
+    await recordMailLog({
+      assessmentId: "LOGIN-OTP",
+      recipients: [to],
+      subject,
+      body: text,
+      status: "sent",
+    });
+    return { sent: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Mail send failed.";
+    console.error("Login OTP email failed:", message);
+    await recordMailLog({
+      assessmentId: "LOGIN-OTP",
+      recipients: [to],
+      subject,
+      body: text,
+      status: "failed",
+      error: message,
+    });
+    return { sent: false, reason: message };
+  }
+}
+
 export { COPY };
