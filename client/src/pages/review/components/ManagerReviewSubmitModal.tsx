@@ -41,7 +41,7 @@ export default function ManagerReviewSubmitModal({
       onClose={onClose}
       preventClose={loading}
       size="lg"
-      title="Review your manager assessment"
+      title="Review your assessment"
       description="Check everything below before you submit. Once submitted, your assessment is locked and the employee is asked to confirm alignment."
       footer={
         <>
