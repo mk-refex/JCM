@@ -17,6 +17,7 @@ export default function AssessmentsList() {
           : "Reviews assigned to you. Open a case to continue where you left off."
       }
       showAlignment
+      showExport={isAdmin}
       emptyTitle="Nothing here yet"
       emptyDescription="Role clarity reviews will appear here once they are created."
     />

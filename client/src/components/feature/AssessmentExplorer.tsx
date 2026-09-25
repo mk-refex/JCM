@@ -1,11 +1,14 @@
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import PageHeader from "@/components/base/PageHeader";
+import Button from "@/components/base/Button";
 import { SectionCard } from "@/components/base/Card";
 import AssessmentTable from "@/components/feature/AssessmentTable";
 import EmptyState from "@/components/base/EmptyState";
 import { useApp } from "@/store/AppContext";
+import { useToast } from "@/store/ToastContext";
 import { derivedRag, effectiveSla } from "@/lib/metrics";
+import { downloadAssessmentsExcel } from "@/lib/assessmentExport";
 import { WORKFLOW_STATUS_META } from "@/constants/clarity";
 import type { Assessment, WorkflowStatus } from "@/types/domain";
 import { cn } from "@/lib/utils";
@@ -19,6 +22,8 @@ interface AssessmentExplorerProps {
   emptyTitle?: string;
   emptyDescription?: string;
   serverHideEmployeeResponses?: boolean;
+  /** Show Excel export for the current filtered list. */
+  showExport?: boolean;
 }
 
 const ALL = "__all__";
@@ -39,13 +44,16 @@ export default function AssessmentExplorer({
   showAlignment = false,
   emptyTitle,
   emptyDescription,
+  showExport = false,
 }: AssessmentExplorerProps) {
   const { employeeById } = useApp();
+  const { pushToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>(ALL);
   const [ragFilter, setRagFilter] = useState<string>(ALL);
   const [slaFilter, setSlaFilter] = useState<string>(ALL);
+  const [exporting, setExporting] = useState(false);
 
   const groupBu = searchParams.get("businessUnit")?.trim() || "";
   const groupFn = searchParams.get("function")?.trim() || "";
@@ -119,6 +127,52 @@ export default function AssessmentExplorer({
     groupConversation,
   ]);
 
+  const hasUiFilter =
+    Boolean(query.trim()) ||
+    statusFilter !== ALL ||
+    ragFilter !== ALL ||
+    slaFilter !== ALL ||
+    hasGroupFilter;
+
+  const handleExport = () => {
+    if (!filtered.length) {
+      pushToast({
+        tone: "info",
+        title: "Nothing to export",
+        message: "No assessments match the current filters.",
+      });
+      return;
+    }
+    setExporting(true);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      downloadAssessmentsExcel(filtered, employeeById, {
+        includeEmptyStages: !hasUiFilter,
+        filename: hasUiFilter
+          ? `role-clarity-filtered-${today}.xlsx`
+          : `role-clarity-assessments-${today}.xlsx`,
+      });
+      pushToast({
+        tone: "success",
+        title: "Export ready",
+        message: hasUiFilter
+          ? `Exported ${filtered.length} filtered assessment(s), split by stage.`
+          : `Exported all ${filtered.length} assessment(s), one sheet per stage.`,
+      });
+    } catch (error) {
+      pushToast({
+        tone: "error",
+        title: "Export failed",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not build the Excel file.",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const selectClass =
     "h-10 w-full min-w-0 cursor-pointer rounded-md border border-background-300 bg-background-50 px-3 font-label text-sm text-foreground-800 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 sm:w-auto";
 
@@ -133,10 +187,24 @@ export default function AssessmentExplorer({
           { label: title },
         ]}
         actions={
-          <span className="inline-flex items-center gap-2 rounded-md border border-background-200 bg-background-100 px-3 py-2 font-label text-xs text-foreground-600">
-            <i className="ri-file-list-3-line text-base" />
-            {filtered.length} of {assessments.length} shown
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-md border border-background-200 bg-background-100 px-3 py-2 font-label text-xs text-foreground-600">
+              <i className="ri-file-list-3-line text-base" />
+              {filtered.length} of {assessments.length} shown
+            </span>
+            {showExport && (
+              <Button
+                size="sm"
+                variant="outline"
+                icon="ri-file-excel-2-line"
+                loading={exporting}
+                disabled={!filtered.length}
+                onClick={handleExport}
+              >
+                Export
+              </Button>
+            )}
+          </div>
         }
       />
 
