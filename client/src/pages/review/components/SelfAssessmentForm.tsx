@@ -5,7 +5,9 @@ import EmployeeDetailsSection from "@/pages/review/components/EmployeeDetailsSec
 import ResponsibilitiesEditor from "@/pages/review/components/ResponsibilitiesEditor";
 import RatingDimensions from "@/pages/review/components/RatingDimensions";
 import ReviewSubmitModal from "@/pages/review/components/ReviewSubmitModal";
+import SlaBreachNotice from "@/components/feature/SlaBreachNotice";
 import { CLARITY_DIMENSIONS } from "@/constants/clarity";
+import { isCampaignStageBreached, slaBreachMessage } from "@/lib/sla";
 import { cn, uid } from "@/lib/utils";
 import type { SelfAssessmentInput } from "@/services/workflowService";
 import type { Assessment, Employee, Responsibility } from "@/types/domain";
@@ -85,7 +87,9 @@ export default function SelfAssessmentForm({
       ok: ratedCount === CLARITY_DIMENSIONS.length,
     },
   ];
-  const canSubmit = checks.every((c) => c.ok);
+  const slaLocked = isCampaignStageBreached("SELF_ASSESSMENT_PENDING");
+  const slaMessage = slaBreachMessage("SELF_ASSESSMENT_PENDING");
+  const canSubmit = checks.every((c) => c.ok) && !slaLocked;
   const busy = saving || submitting;
 
   const buildInput = (): SelfAssessmentInput => ({
@@ -118,7 +122,7 @@ export default function SelfAssessmentForm({
   };
 
   const handleConfirmSubmit = async () => {
-    if (submitting) return;
+    if (submitting || slaLocked) return;
     setSubmitting(true);
     try {
       await onSubmit(buildInput());
@@ -130,6 +134,7 @@ export default function SelfAssessmentForm({
 
   return (
     <div className="flex flex-col gap-3">
+      {slaLocked && <SlaBreachNotice message={slaMessage} />}
       <section className="rounded-lg border border-secondary-200 bg-secondary-50 px-3 py-2">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-2.5">
@@ -250,9 +255,11 @@ export default function SelfAssessmentForm({
         </ul>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-background-200 pt-3">
           <p className="text-xs text-foreground-500">
-            {canSubmit
-              ? "Everything looks good. You can submit your self assessment."
-              : "Resolve the outstanding checks above to enable submission."}
+            {slaLocked
+              ? "Submission is closed because the SLA for this stage has been breached."
+              : canSubmit
+                ? "Everything looks good. You can submit your self assessment."
+                : "Resolve the outstanding checks above to enable submission."}
           </p>
           <Button
             variant="primary"

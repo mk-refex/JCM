@@ -72,6 +72,24 @@ export function workingDaysBetween(start, end) {
   return forward ? count : -count;
 }
 
+export function isCampaignStageBreached(stage, reference = new Date()) {
+  const dueOn = slaStages[stage]?.dueOn;
+  if (!dueOn) return false;
+  return computeSlaStatus(parseCampaignDate(dueOn).toISOString(), null, reference) === "BREACHED";
+}
+
+export function slaBreachMessage(stage) {
+  const dueOn = slaStages[stage]?.dueOn;
+  const dueLabel = dueOn
+    ? parseCampaignDate(dueOn).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "the due date";
+  return `The SLA for this stage was due on ${dueLabel}. You can no longer submit or approve this step.`;
+}
+
 export function computeSlaStatus(dueAt, completedAt, reference = new Date()) {
   if (completedAt) return "COMPLETED";
   if (!dueAt) return "ON_TRACK";

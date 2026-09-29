@@ -4,7 +4,9 @@ import { SectionCard } from "@/components/base/Card";
 import EmployeeDetailsSection from "@/pages/review/components/EmployeeDetailsSection";
 import RatingDimensions from "@/pages/review/components/RatingDimensions";
 import ManagerReviewSubmitModal from "@/pages/review/components/ManagerReviewSubmitModal";
+import SlaBreachNotice from "@/components/feature/SlaBreachNotice";
 import { CLARITY_DIMENSIONS } from "@/constants/clarity";
+import { isCampaignStageBreached, slaBreachMessage } from "@/lib/sla";
 import { cn } from "@/lib/utils";
 import type { ManagerAssessmentInput } from "@/services/workflowService";
 import type { Assessment, Employee } from "@/types/domain";
@@ -73,7 +75,9 @@ export default function ManagerAssessmentForm({
       ok: roleExpectations.trim().length > 0,
     },
   ];
-  const canSubmit = checks.every((c) => c.ok);
+  const slaLocked = isCampaignStageBreached("MANAGER_ASSESSMENT_PENDING");
+  const slaMessage = slaBreachMessage("MANAGER_ASSESSMENT_PENDING");
+  const canSubmit = checks.every((c) => c.ok) && !slaLocked;
   const busy = saving || submitting;
 
   const buildInput = (): ManagerAssessmentInput => ({
@@ -102,7 +106,7 @@ export default function ManagerAssessmentForm({
   };
 
   const handleConfirmSubmit = async () => {
-    if (submitting) return;
+    if (submitting || slaLocked) return;
     setSubmitting(true);
     try {
       await onSubmit(buildInput());
@@ -114,6 +118,7 @@ export default function ManagerAssessmentForm({
 
   return (
     <div className="flex flex-col gap-3">
+      {slaLocked && <SlaBreachNotice message={slaMessage} />}
       <section className="rounded-lg border border-secondary-200 bg-secondary-50 px-3 py-2">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-2.5">
@@ -262,9 +267,11 @@ export default function ManagerAssessmentForm({
         </ul>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-background-200 pt-4">
           <p className="text-xs text-foreground-500">
-            {canSubmit
-              ? "Everything looks good. You can submit your assessment."
-              : "Resolve the outstanding checks above to enable submission."}
+            {slaLocked
+              ? "Submission is closed because the SLA for this stage has been breached."
+              : canSubmit
+                ? "Everything looks good. You can submit your assessment."
+                : "Resolve the outstanding checks above to enable submission."}
           </p>
           <Button
             variant="primary"

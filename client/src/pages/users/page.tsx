@@ -83,6 +83,7 @@ export default function UsersPage() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return masterUsers.filter((user) => {
+      if (!user.employeeCode?.trim()) return false;
       if (departmentFilter && !matchesLabel(user, departmentFilter, "department")) {
         return false;
       }

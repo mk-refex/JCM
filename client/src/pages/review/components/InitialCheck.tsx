@@ -1,11 +1,14 @@
 import { useState } from "react";
 import Button from "@/components/base/Button";
 import { SectionCard } from "@/components/base/Card";
+import SlaBreachNotice from "@/components/feature/SlaBreachNotice";
 import { cn } from "@/lib/utils";
 import type { InitialClarityResponse } from "@/types/domain";
 
 interface InitialCheckProps {
   onResolve: (response: InitialClarityResponse) => void | Promise<unknown>;
+  submissionLocked?: boolean;
+  lockMessage?: string;
 }
 
 const OPTIONS: Array<{
@@ -72,12 +75,16 @@ const OPTIONS: Array<{
   },
 ];
 
-export default function InitialCheck({ onResolve }: InitialCheckProps) {
+export default function InitialCheck({
+  onResolve,
+  submissionLocked = false,
+  lockMessage,
+}: InitialCheckProps) {
   const [selected, setSelected] = useState<InitialClarityResponse | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const handleConfirm = async () => {
-    if (!selected || submitting) return;
+    if (!selected || submitting || submissionLocked) return;
     setSubmitting(true);
     try {
       await onResolve(selected);
@@ -93,6 +100,7 @@ export default function InitialCheck({ onResolve }: InitialCheckProps) {
       icon="ri-question-answer-line"
     >
       <div className="flex flex-col gap-5">
+        {submissionLocked && lockMessage && <SlaBreachNotice message={lockMessage} />}
         <div className="rounded-md border border-secondary-200 bg-secondary-50 p-4">
           <p className="font-heading text-sm font-semibold text-foreground-900 md:text-base">
             Do you have clarity on your current role and expectations?
@@ -110,12 +118,12 @@ export default function InitialCheck({ onResolve }: InitialCheckProps) {
               <button
                 key={option.value}
                 type="button"
-                disabled={submitting}
+                disabled={submitting || submissionLocked}
                 onClick={() => setSelected(option.value)}
                 className={cn(
                   "flex cursor-pointer flex-col gap-3 rounded-lg border p-4 text-left transition-colors",
                   active ? option.tone.active : option.tone.idle,
-                  submitting && "cursor-not-allowed opacity-70",
+                  (submitting || submissionLocked) && "cursor-not-allowed opacity-70",
                 )}
               >
                 <div className="flex items-center justify-between">
@@ -154,15 +162,17 @@ export default function InitialCheck({ onResolve }: InitialCheckProps) {
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-background-200 pt-5">
           <p className="text-xs text-foreground-500">
-            {selected
-              ? "Confirm to record your response and continue."
-              : "Select an option to continue."}
+            {submissionLocked
+              ? "This step is closed because the SLA has been breached."
+              : selected
+                ? "Confirm to record your response and continue."
+                : "Select an option to continue."}
           </p>
           <Button
             variant="primary"
             icon="ri-arrow-right-line"
             loading={submitting}
-            disabled={!selected || submitting}
+            disabled={!selected || submitting || submissionLocked}
             onClick={() => void handleConfirm()}
           >
             Confirm and continue

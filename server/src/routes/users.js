@@ -39,9 +39,10 @@ router.get("/", async (req, res) => {
   const offset = (page - 1) * limit;
   const db = await getPool();
 
+  const coded = `TRIM(COALESCE(employee_code, '')) <> ''`;
   const where = q
-    ? `WHERE name LIKE ? OR email LIKE ? OR employee_code LIKE ? OR department LIKE ? OR designation LIKE ? OR company LIKE ?`
-    : "";
+    ? `WHERE ${coded} AND (name LIKE ? OR email LIKE ? OR employee_code LIKE ? OR department LIKE ? OR designation LIKE ? OR company LIKE ?)`
+    : `WHERE ${coded}`;
   const like = `%${q}%`;
   const params = q ? [like, like, like, like, like, like] : [];
 

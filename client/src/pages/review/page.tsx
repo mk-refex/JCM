@@ -11,6 +11,7 @@ import StatusNotice from "@/pages/review/components/StatusNotice";
 import { useApp } from "@/store/AppContext";
 import { useToast } from "@/store/ToastContext";
 import { canAccessAssessment } from "@/services/assessmentService";
+import { isCampaignStageBreached, slaBreachMessage } from "@/lib/sla";
 import { currentStepIndex, STEPPER_STEPS } from "@/lib/workflow";
 import {
   CLOSURE_MESSAGE,
@@ -307,6 +308,8 @@ export default function ReviewPage() {
         </div>
 
         <InitialCheck
+          submissionLocked={isCampaignStageBreached("INITIAL_CLARITY_CHECK")}
+          lockMessage={slaBreachMessage("INITIAL_CLARITY_CHECK")}
           onResolve={(response) =>
             toastResult(submitInitialClarity(record, response))
           }

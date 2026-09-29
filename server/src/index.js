@@ -14,7 +14,10 @@ import ssoRoutes from "./routes/sso.js";
 import settingsRoutes from "./routes/settings.js";
 import { recordSyncError, syncUsersFromMaster } from "./services/userMaster.js";
 import { syncEmployeesFromUsers } from "./services/employees.js";
-import { ensureAssessmentsForEmployees } from "./services/assessments.js";
+import {
+  ensureAssessmentsForEmployees,
+  removeAssessmentsWithoutEmployeeCode,
+} from "./services/assessments.js";
 import { seedDefaultSettings } from "./services/settings.js";
 import { refreshSlaCache } from "./lib/sla.js";
 import { startSchedulers } from "./jobs/scheduler.js";
@@ -66,9 +69,10 @@ if (existsSync(clientPath)) {
 
 async function hydrateOrganisation() {
   const employees = await syncEmployeesFromUsers();
+  const removed = await removeAssessmentsWithoutEmployeeCode();
   const assessments = await ensureAssessmentsForEmployees();
   console.log(
-    `Employees synced: ${employees.count}. Assessments created: ${assessments.created}.`,
+    `Employees synced: ${employees.count}. Assessments removed (no employee code): ${removed.assessments}. Assessments created: ${assessments.created}.`,
   );
 }
 

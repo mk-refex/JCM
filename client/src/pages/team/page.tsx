@@ -45,6 +45,7 @@ export default function TeamPage() {
         title="My team's role clarity assessments"
         description="You must rate each dimension independently. Employee responses remain hidden until you submit your assessment."
         showAlignment
+        showExport
         emptyTitle="No team assessments assigned"
         emptyDescription="Assessments will appear here once your team members submit their self assessment."
       />

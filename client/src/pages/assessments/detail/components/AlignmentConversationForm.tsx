@@ -1,6 +1,8 @@
 import { useState } from "react";
 import Button from "@/components/base/Button";
 import { SectionCard } from "@/components/base/Card";
+import SlaBreachNotice from "@/components/feature/SlaBreachNotice";
+import { isCampaignStageBreached, slaBreachMessage } from "@/lib/sla";
 import { cn } from "@/lib/utils";
 import type { Assessment } from "@/types/domain";
 
@@ -40,7 +42,14 @@ export default function AlignmentConversationForm({
     : existing?.hrbpComments || assessment.hrbpComments || "";
   const hodReady = hodValue.trim().length > 0;
   const busy = action !== null;
-  const canComplete = (canEditHod || canEditHrbp) && hodReady && !busy;
+  const conversationStage =
+    assessment.status === "ROLE_ALIGNMENT_REQUIRED"
+      ? "ROLE_ALIGNMENT_REQUIRED"
+      : "ROLE_ALIGNMENT_IN_PROGRESS";
+  const slaLocked = isCampaignStageBreached(conversationStage);
+  const slaMessage = slaBreachMessage(conversationStage);
+  const canComplete =
+    (canEditHod || canEditHrbp) && hodReady && !busy && !slaLocked;
 
   const payload = () => {
     const input: {
@@ -53,7 +62,7 @@ export default function AlignmentConversationForm({
   };
 
   const run = async (kind: "save" | "complete", complete = false) => {
-    if (busy) return;
+    if (busy || (complete && slaLocked)) return;
     setAction(kind);
     try {
       await onSave({ ...payload(), ...(complete ? { complete: true } : {}) });
@@ -69,6 +78,11 @@ export default function AlignmentConversationForm({
       icon="ri-group-line"
       accent
     >
+      {slaLocked && (
+        <div className="mb-4">
+          <SlaBreachNotice message={slaMessage} />
+        </div>
+      )}
       <div className="mb-5 rounded-md border border-secondary-200 bg-secondary-50 px-3 py-2.5">
         <p className="text-xs leading-relaxed text-foreground-700">
           Discuss the areas of difference and arrive at a common understanding of
@@ -132,7 +146,9 @@ export default function AlignmentConversationForm({
             hodReady ? "text-foreground-500" : "text-foreground-500",
           )}
         >
-          HOD comments are required before this conversation can be completed.
+          {slaLocked
+            ? "This step is closed because the SLA has been breached."
+            : "HOD comments are required before this conversation can be completed."}
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <Button

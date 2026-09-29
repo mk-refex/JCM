@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Button from "@/components/base/Button";
 import { SectionCard } from "@/components/base/Card";
+import SlaBreachNotice from "@/components/feature/SlaBreachNotice";
 import { RagBadge } from "@/components/base/Badge";
 import ScoreChip, { GapChip } from "@/components/base/ScoreChip";
 import { CLARITY_DIMENSIONS } from "@/constants/clarity";
@@ -11,6 +12,7 @@ import {
   derivedManagerAverage,
   derivedRag,
 } from "@/lib/metrics";
+import { isCampaignStageBreached, slaBreachMessage } from "@/lib/sla";
 import { cn } from "@/lib/utils";
 import type { AlignmentStatus, Assessment } from "@/types/domain";
 
@@ -29,9 +31,11 @@ export default function AlignmentCheck({
     Exclude<AlignmentStatus, "PENDING"> | null
   >(null);
   const [submitting, setSubmitting] = useState(false);
+  const slaLocked = isCampaignStageBreached("EMPLOYEE_ALIGNMENT_PENDING");
+  const slaMessage = slaBreachMessage("EMPLOYEE_ALIGNMENT_PENDING");
 
   const handleConfirm = async () => {
-    if (!decision || submitting) return;
+    if (!decision || submitting || slaLocked) return;
     setSubmitting(true);
     try {
       await onDecide(decision);
@@ -217,17 +221,18 @@ export default function AlignmentCheck({
         icon="ri-hand-heart-line"
       >
         <div className="flex flex-col gap-5">
+          {slaLocked && <SlaBreachNotice message={slaMessage} />}
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             <button
               type="button"
-              disabled={submitting}
+              disabled={submitting || slaLocked}
               onClick={() => setDecision("ALIGNED")}
               className={cn(
                 "flex cursor-pointer flex-col gap-2 rounded-lg border p-4 text-left transition-colors",
                 decision === "ALIGNED"
                   ? "border-primary-400 bg-primary-50 ring-2 ring-primary-100"
                   : "border-background-200 bg-background-50 hover:border-primary-300 hover:bg-background-100",
-                submitting && "cursor-not-allowed opacity-70",
+                (submitting || slaLocked) && "cursor-not-allowed opacity-70",
               )}
             >
               <span className="flex items-center gap-2">
@@ -253,14 +258,14 @@ export default function AlignmentCheck({
 
             <button
               type="button"
-              disabled={submitting}
+              disabled={submitting || slaLocked}
               onClick={() => setDecision("NOT_ALIGNED")}
               className={cn(
                 "flex cursor-pointer flex-col gap-2 rounded-lg border p-4 text-left transition-colors",
                 decision === "NOT_ALIGNED"
                   ? "border-accent-400 bg-accent-50 ring-2 ring-accent-100"
                   : "border-background-200 bg-background-50 hover:border-accent-300 hover:bg-background-100",
-                submitting && "cursor-not-allowed opacity-70",
+                (submitting || slaLocked) && "cursor-not-allowed opacity-70",
               )}
             >
               <span className="flex items-center gap-2">
@@ -289,15 +294,17 @@ export default function AlignmentCheck({
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-background-200 pt-5">
             <p className="text-xs text-foreground-500">
-              {decision
-                ? "Confirm to record your decision."
-                : "Your decision is mandatory to proceed."}
+              {slaLocked
+                ? "This step is closed because the SLA has been breached."
+                : decision
+                  ? "Confirm to record your decision."
+                  : "Your decision is mandatory to proceed."}
             </p>
             <Button
               variant="primary"
               icon="ri-check-double-line"
               loading={submitting}
-              disabled={!decision || submitting}
+              disabled={!decision || submitting || slaLocked}
               onClick={() => void handleConfirm()}
             >
               Confirm alignment decision

@@ -1,6 +1,13 @@
 import { getPool } from "../db.js";
 import { COPY } from "../lib/copy.js";
-import { computeSlaStatus, normalizeSla, nowIso, uid } from "../lib/sla.js";
+import {
+  computeSlaStatus,
+  isCampaignStageBreached,
+  normalizeSla,
+  nowIso,
+  slaBreachMessage,
+  uid,
+} from "../lib/sla.js";
 import {
   loadStakeholders,
   sendAlignedEmails,
@@ -164,10 +171,53 @@ function blankAssessment(employee) {
   };
 }
 
+const HAS_EMPLOYEE_CODE = `TRIM(COALESCE(u.employee_code, '')) <> ''`;
+
+/** Assessments whose employee has no employee code in the user master. */
+function assessmentsWithoutEmployeeCodeSql(alias = "a") {
+  return `
+    ${alias}.employee_id NOT IN (
+      SELECT id FROM users u WHERE ${HAS_EMPLOYEE_CODE}
+    )
+  `;
+}
+
+export async function removeAssessmentsWithoutEmployeeCode() {
+  const db = await getPool();
+  const match = assessmentsWithoutEmployeeCodeSql("a");
+  const [audit] = await db.query(
+    `DELETE al FROM audit_logs al
+     INNER JOIN assessments a ON a.id = al.assessment_id
+     WHERE ${match}`,
+  );
+  const [notes] = await db.query(
+    `DELETE n FROM notifications n
+     INNER JOIN assessments a ON a.id = n.assessment_id
+     WHERE ${match}`,
+  );
+  const [mail] = await db.query(
+    `DELETE m FROM mail_logs m
+     INNER JOIN assessments a ON a.id = m.assessment_id
+     WHERE ${match}`,
+  );
+  const [assessments] = await db.query(
+    `DELETE a FROM assessments a WHERE ${match}`,
+  );
+  return {
+    assessments: assessments.affectedRows || 0,
+    auditLogs: audit.affectedRows || 0,
+    notifications: notes.affectedRows || 0,
+    mailLogs: mail.affectedRows || 0,
+  };
+}
+
 export async function ensureAssessmentsForEmployees() {
   const db = await getPool();
   const [employees] = await db.query(
-    "SELECT id, emp_id, manager_id, hod_id, hrbp_id FROM employees",
+    `SELECT e.id, e.emp_id, e.manager_id, e.hod_id, e.hrbp_id
+     FROM employees e
+     INNER JOIN users u ON u.id = e.id
+     WHERE ${HAS_EMPLOYEE_CODE}`,
   );
   const [existing] = await db.query("SELECT employee_id FROM assessments");
   const have = new Set(existing.map((row) => row.employee_id));
@@ -339,6 +389,11 @@ async function loadRaw(id) {
   return rows[0] ? rowToAssessment(rows[0]) : null;
 }
 
+function blockIfStageBreached(stage) {
+  if (!isCampaignStageBreached(stage)) return null;
+  return { error: slaBreachMessage(stage), status: 403 };
+}
+
 async function applyWorkflow(auth, id, buildResult) {
   const assessment = await loadRaw(id);
   if (!assessment || !canAccessAssessment(auth, assessment)) {
@@ -376,6 +431,8 @@ async function namesFor(assessment) {
 }
 
 export async function runInitialClarity(auth, id, response) {
+  const blocked = blockIfStageBreached("INITIAL_CLARITY_CHECK");
+  if (blocked) return blocked;
   const assessment = await loadRaw(id);
   const names = await namesFor(assessment);
   const result = await applyWorkflow(auth, id, (current) =>
@@ -394,6 +451,8 @@ export async function runSelfDraft(auth, id, input) {
 }
 
 export async function runSelfSubmit(auth, id, input) {
+  const blocked = blockIfStageBreached("SELF_ASSESSMENT_PENDING");
+  if (blocked) return blocked;
   const assessment = await loadRaw(id);
   const names = await namesFor(assessment);
   const result = await applyWorkflow(auth, id, (current) =>
@@ -410,6 +469,8 @@ export async function runManagerDraft(auth, id, input) {
 }
 
 export async function runManagerSubmit(auth, id, input) {
+  const blocked = blockIfStageBreached("MANAGER_ASSESSMENT_PENDING");
+  if (blocked) return blocked;
   const assessment = await loadRaw(id);
   const names = await namesFor(assessment);
   const result = await applyWorkflow(auth, id, (current) =>
@@ -422,6 +483,8 @@ export async function runManagerSubmit(auth, id, input) {
 }
 
 export async function runAlignment(auth, id, decision) {
+  const blocked = blockIfStageBreached("EMPLOYEE_ALIGNMENT_PENDING");
+  if (blocked) return blocked;
   const assessment = await loadRaw(id);
   const names = await namesFor(assessment);
   const result = await applyWorkflow(auth, id, (current) =>
@@ -465,6 +528,14 @@ export async function runAlignmentConversation(auth, id, input = {}) {
       status: 400,
     };
   }
+  if (input.complete) {
+    const stage =
+      assessment.status === "ROLE_ALIGNMENT_REQUIRED"
+        ? "ROLE_ALIGNMENT_REQUIRED"
+        : "ROLE_ALIGNMENT_IN_PROGRESS";
+    const blocked = blockIfStageBreached(stage);
+    if (blocked) return blocked;
+  }
 
   const payload = {};
   if (isHod && input.hodComments !== undefined) payload.hodComments = input.hodComments;
@@ -507,6 +578,8 @@ export async function runHodSignoff(auth, id, comments) {
   if (!HOD_SIGNOFF_STATUSES.has(assessment.status)) {
     return { error: "This case is not awaiting HOD sign-off.", status: 400 };
   }
+  const blocked = blockIfStageBreached("HOD_SIGNOFF_PENDING");
+  if (blocked) return blocked;
 
   const trimmed = String(comments || "").trim();
   if (!trimmed) {

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import Button from "@/components/base/Button";
 import { SectionCard } from "@/components/base/Card";
+import SlaBreachNotice from "@/components/feature/SlaBreachNotice";
+import { isCampaignStageBreached, slaBreachMessage } from "@/lib/sla";
 import { cn } from "@/lib/utils";
 
 interface HodSignoffFormProps {
@@ -14,7 +16,9 @@ export default function HodSignoffForm({
 }: HodSignoffFormProps) {
   const [comments, setComments] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const ready = comments.trim().length > 0 && !submitting;
+  const slaLocked = isCampaignStageBreached("HOD_SIGNOFF_PENDING");
+  const slaMessage = slaBreachMessage("HOD_SIGNOFF_PENDING");
+  const ready = comments.trim().length > 0 && !submitting && !slaLocked;
 
   const handleSubmit = async () => {
     if (!ready) return;
@@ -33,6 +37,11 @@ export default function HodSignoffForm({
       icon="ri-verified-badge-line"
       accent
     >
+      {slaLocked && (
+        <div className="mb-4">
+          <SlaBreachNotice message={slaMessage} />
+        </div>
+      )}
       <label className="mb-1.5 block font-label text-xs font-semibold uppercase tracking-wide text-foreground-500">
         HOD comments / clarifications
       </label>

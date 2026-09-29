@@ -1,4 +1,5 @@
 import { SLA_CONFIG, type SlaStageConfig } from "@/constants/clarity";
+import { formatDate } from "@/lib/utils";
 import type { SlaRecord, SlaStatus } from "@/types/domain";
 
 let runtimeStages: Record<string, SlaStageConfig> = { ...SLA_CONFIG };
@@ -78,6 +79,26 @@ export function slaDueOnForStage(stage: string): string | null {
 
 export function slaOpenFromForStage(stage: string): string | null {
   return runtimeStages[stage]?.openFrom ?? null;
+}
+
+export function isCampaignStageBreached(
+  stage: string,
+  reference: Date = new Date(),
+): boolean {
+  const dueOn = slaDueOnForStage(stage);
+  if (!dueOn) return false;
+  return (
+    computeSlaStatus(parseCampaignDate(dueOn).toISOString(), null, reference) ===
+    "BREACHED"
+  );
+}
+
+export function slaBreachMessage(stage: string): string {
+  const dueOn = slaDueOnForStage(stage);
+  const dueLabel = dueOn
+    ? formatDate(parseCampaignDate(dueOn).toISOString())
+    : "the due date";
+  return `The SLA for this stage was due on ${dueLabel}. You can no longer submit or approve this step.`;
 }
 
 export function computeSlaStatus(
